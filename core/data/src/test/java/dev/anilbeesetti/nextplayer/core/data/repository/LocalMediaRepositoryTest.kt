@@ -43,9 +43,9 @@ class LocalMediaRepositoryTest {
     }
 
     @Test
-    fun `history respects privacy preferences and preserves playback state`() = runTest {
+    fun `preserves playback state`() = runTest {
         val file = temporaryFolder.newFile().apply {
-            writeText(text = """{"isHistoryPaused":true}""")
+            writeText(text = """{}""")
         }
         val preferences = AppPreferencesDataSource(
             DataStoreFactory.create(
@@ -76,7 +76,6 @@ class LocalMediaRepositoryTest {
             appPreferencesDataSource = preferences,
             RuntimeEnvironment.getApplication(),
         )
-        val adHocUri = "smb://example.com/share/movie.mkv"
         val vaultUri =
             "content://${RuntimeEnvironment.getApplication().packageName}" +
                 ".fileprovider/external_files_path/vault/movie.mkv"
@@ -100,11 +99,15 @@ class LocalMediaRepositoryTest {
             uri = "content://new",
             position = 400,
         )
+        // History is recorded normally (the old isHistoryPaused switch is removed).
         assertEquals(
-            100L,
+            200L,
             dao.get(uri = "content://watched")?.lastPlayedTime,
         )
-        assertNull(dao.get(uri = "content://new")?.lastPlayedTime)
+        assertEquals(
+            200L,
+            dao.get(uri = "content://new")?.lastPlayedTime,
+        )
         assertEquals(
             1_000L,
             dao.get(uri = "content://new")?.duration,
@@ -114,10 +117,6 @@ class LocalMediaRepositoryTest {
             dao.get(uri = "content://new")?.playbackPosition,
         )
 
-        assertEquals(
-            500L,
-            dao.get(uri = adHocUri)?.lastPlayedTime,
-        )
         assertEquals(
             90L,
             dao.get(uri = vaultUri)?.lastPlayedTime,

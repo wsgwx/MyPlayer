@@ -22,21 +22,25 @@ class LocalRemovedVideoRepository(
     private val context: Context,
 ) : RemovedVideoRepository {
 
-    override fun observeRemovedVideos(): Flow<List<RemovedVideo>> = removedVideoDao.getAll().map { entities ->
-        entities.map { entity ->
-            RemovedVideo(
-                uriString = entity.uriString,
-                path = entity.path,
-                removedAt = entity.removedAt,
-            )
+    override fun observeRemovedVideos(): Flow<List<RemovedVideo>> =
+        removedVideoDao.getAll().map { entities ->
+            entities.map { entity ->
+                RemovedVideo(
+                    uriString = entity.uriString,
+                    path = entity.path,
+                    removedAt = entity.removedAt,
+                )
+            }
         }
-    }
 
     override suspend fun restoreRemovedVideos(uris: List<String>) {
         if (uris.isEmpty()) return
         removedVideoDao.deleteByUris(uris = uris)
         // The library is a MediaStore query filtered by the ignore list; nudge its observer so the
         // restored videos reappear without waiting for some unrelated media change.
-        context.contentResolver.notifyChange(VIDEO_COLLECTION_URI, null)
+        context.contentResolver.notifyChange(
+            VIDEO_COLLECTION_URI,
+            null,
+        )
     }
 }

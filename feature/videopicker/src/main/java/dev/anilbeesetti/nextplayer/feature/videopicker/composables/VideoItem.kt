@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -275,7 +275,10 @@ fun VideoGridItem(
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
-            modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp),
+            modifier = Modifier.padding(
+                horizontal = 2.dp,
+                vertical = 1.dp,
+            ),
         )
     }
 }
@@ -444,13 +447,20 @@ fun RatingBadge(rating: Float, modifier: Modifier = Modifier) {
         text = if (rating % 1f == 0f) {
             rating.toInt().toString()
         } else {
-            String.format(java.util.Locale.US, "%.1f", rating)
+            String.format(
+                java.util.Locale.US,
+                "%.1f",
+                rating,
+            )
         },
         style = MaterialTheme.typography.labelMedium,
         color = Color(0xFFFFB74D),
         modifier = modifier
             .clip(shape = CircleShape)
             .background(color = Color.Black.copy(alpha = 0.65f))
-            .padding(horizontal = 7.dp, vertical = 2.dp),
+            .padding(
+                horizontal = 7.dp,
+                vertical = 2.dp,
+            ),
     )
 }

@@ -85,11 +85,18 @@ data class Sort(val by: By, val order: Order) {
 
         val comparator = when (by) {
             By.TITLE -> videoTitleComparator
+
             By.LENGTH -> compareBy<Video> { it.duration }.then(comparator = videoTitleComparator)
+
             By.PATH -> videoPathComparator
+
             By.SIZE -> compareBy<Video> { it.size }.then(comparator = videoTitleComparator)
+
             By.DATE -> compareBy<Video> { it.dateModified }.then(comparator = videoTitleComparator)
-            By.RATING -> compareBy<Video> { it.userRating ?: -1f }.then(comparator = videoTitleComparator)
+
+            By.RATING -> compareBy<Video> {
+                it.userRating ?: -1f
+            }.then(comparator = videoTitleComparator)
         }
 
         return when (order) {
@@ -125,6 +132,7 @@ data class Sort(val by: By, val order: Order) {
             By.SIZE -> compareBy<Folder> { it.totalSize }.then(comparator = folderNameComparator)
 
             By.DATE -> compareBy<Folder> { it.dateModified }.then(comparator = folderNameComparator)
+
             By.RATING -> folderNameComparator
         }
 

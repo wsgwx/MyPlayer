@@ -113,7 +113,6 @@ class MediaPickerViewModel(
 
             is MediaPickerAction.OnSettingsClick -> output.openSettings()
 
-
             is MediaPickerAction.Refresh -> refresh()
 
             is MediaPickerAction.RenameVideo -> renameVideo(
@@ -144,7 +143,11 @@ class MediaPickerViewModel(
 
             is MediaPickerAction.ShowMediaInfo -> showMediaInfo(action.video)
 
-            is MediaPickerAction.RateVideo -> rateVideo(action.uri, action.rating, action.comment)
+            is MediaPickerAction.RateVideo -> rateVideo(
+                action.uri,
+                action.rating,
+                action.comment,
+            )
 
             is MediaPickerAction.DismissMediaInfo -> stateInternal.update {
                 it.copy(mediaInfo = null)
@@ -161,7 +164,6 @@ class MediaPickerViewModel(
             )
 
             is MediaPickerAction.CancelTransfer -> cancelTransfer()
-
         }
     }
 
@@ -198,14 +200,6 @@ class MediaPickerViewModel(
             }
         }
     }
-
-
-
-
-
-
-
-
 
     private fun playSelectedItems(selectedItems: Set<SelectionItem>) {
         viewModelScope.launch {
@@ -432,7 +426,6 @@ data class MediaPickerUiState(
 }
 
 @Stable
-
 sealed interface TransferFlowState {
     data object Idle : TransferFlowState
     data class Processing(val mode: TransferMode, val progress: TransferProgress) :
@@ -453,14 +446,14 @@ sealed interface MediaPickerAction {
     data object OpenVault : MediaPickerAction
     data object OpenAppearance : MediaPickerAction
     data class DeleteSelectedItems(val selectionItems: Set<SelectionItem>) : MediaPickerAction
-    data class RemoveSelectedItemsFromLibrary(
-        val selectionItems: Set<SelectionItem>,
-    ) : MediaPickerAction
+    data class RemoveSelectedItemsFromLibrary(val selectionItems: Set<SelectionItem>) :
+        MediaPickerAction
     data class ShareSelectedItems(val selectionItems: Set<SelectionItem>) : MediaPickerAction
     data class CopySelectedItems(val selectionItems: Set<SelectionItem>) : MediaPickerAction
     data class MoveSelectedItems(val selectionItems: Set<SelectionItem>) : MediaPickerAction
     data object CancelTransfer : MediaPickerAction
     data class ShowMediaInfo(val video: Video) : MediaPickerAction
-    data class RateVideo(val uri: String, val rating: Float?, val comment: String) : MediaPickerAction
+    data class RateVideo(val uri: String, val rating: Float?, val comment: String) :
+        MediaPickerAction
     data object DismissMediaInfo : MediaPickerAction
 }

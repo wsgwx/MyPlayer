@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,8 +34,6 @@ import dev.anilbeesetti.nextplayer.core.ui.components.CancelButton
 import dev.anilbeesetti.nextplayer.core.ui.components.DoneButton
 import dev.anilbeesetti.nextplayer.core.ui.components.NextDialog
 import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ExperimentalMaterial3Api
 
 private const val MAX_RATING = 10
 
@@ -125,7 +125,10 @@ fun RatingDialog(
         confirmButton = {
             DoneButton(
                 onClick = {
-                    onSave(rating, comment.trim())
+                    onSave(
+                        rating,
+                        comment.trim(),
+                    )
                 },
             )
         },
@@ -134,11 +137,7 @@ fun RatingDialog(
 }
 
 @Composable
-private fun ScoreChip(
-    value: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun ScoreChip(value: Int, selected: Boolean, onClick: () -> Unit) {
     Text(
         text = value.toString(),
         style = MaterialTheme.typography.labelLarge,

@@ -1,23 +1,17 @@
 package dev.anilbeesetti.nextplayer.settings.screens.appearance
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import dev.anilbeesetti.nextplayer.settings.extensions.description
-import dev.anilbeesetti.nextplayer.core.ui.theme.scheme
-import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceItem
-import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusRing
-import dev.anilbeesetti.nextplayer.core.model.ThemePalette
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,26 +22,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.anilbeesetti.nextplayer.core.model.ThemeConfig
+import dev.anilbeesetti.nextplayer.core.model.ThemePalette
 import dev.anilbeesetti.nextplayer.core.ui.R
 import dev.anilbeesetti.nextplayer.core.ui.components.ClickablePreferenceItem
 import dev.anilbeesetti.nextplayer.core.ui.components.ListSectionTitle
 import dev.anilbeesetti.nextplayer.core.ui.components.NextTopAppBar
+import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceItem
 import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceSwitch
 import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceSwitchWithDivider
 import dev.anilbeesetti.nextplayer.core.ui.components.RadioTextButton
 import dev.anilbeesetti.nextplayer.core.ui.components.rememberTvListFocusRequester
 import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusDown
+import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusRing
 import dev.anilbeesetti.nextplayer.core.ui.components.tvListFocus
 import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
+import dev.anilbeesetti.nextplayer.core.ui.theme.scheme
 import dev.anilbeesetti.nextplayer.core.ui.theme.supportsDynamicTheming
 import dev.anilbeesetti.nextplayer.settings.composables.OptionsDialog
+import dev.anilbeesetti.nextplayer.settings.extensions.description
 import dev.anilbeesetti.nextplayer.settings.extensions.name
 
 @Composable
@@ -194,7 +194,10 @@ private fun PaletteRow(
                         Box(
                             modifier = Modifier
                                 .size(size = 16.dp)
-                                .background(color = color, shape = CircleShape),
+                                .background(
+                                    color = color,
+                                    shape = CircleShape,
+                                ),
                         )
                     }
                 }

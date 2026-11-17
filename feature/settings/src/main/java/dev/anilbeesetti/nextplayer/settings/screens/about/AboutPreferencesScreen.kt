@@ -28,9 +28,7 @@ fun AboutPreferencesScreen(viewModel: AboutPreferencesViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AboutPreferencesScreenContent(
-    onAction: (AboutPreferencesAction) -> Unit,
-) {
+private fun AboutPreferencesScreenContent(onAction: (AboutPreferencesAction) -> Unit) {
     Scaffold(
         topBar = {
             NextTopAppBar(

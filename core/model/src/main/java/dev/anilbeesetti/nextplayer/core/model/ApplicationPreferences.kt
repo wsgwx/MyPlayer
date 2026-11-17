@@ -14,7 +14,9 @@ data class ApplicationPreferences(
     val markLastPlayedMedia: Boolean = true,
     /** When non-empty, only videos living under one of these paths are shown. */
     val scanFolders: List<String> = emptyList(),
-    val mediaViewMode: MediaViewMode = MediaViewMode.FOLDERS,
+    /** Discovered folders the user removed from the scan-folder list; they stay hidden. */
+    val hiddenScanFolders: List<String> = emptyList(),
+    val mediaViewMode: MediaViewMode = MediaViewMode.VIDEOS,
     val mediaLayoutMode: MediaLayoutMode = MediaLayoutMode.LIST,
 
     /** Background of the library and the privacy space. */
@@ -53,9 +55,13 @@ data class ApplicationPreferences(
  * lives inside one of the configured scan folders.
  */
 fun ApplicationPreferences.isUnderScanFolder(path: String?): Boolean {
-    if (scanFolders.isEmpty()) return true
+    // An empty whitelist means the user hasn't opted in yet: show nothing rather than the
+    // whole library.
+    if (scanFolders.isEmpty()) return false
     if (path.isNullOrBlank()) return false
-    return scanFolders.any { folder -> path == folder || path.startsWith(folder.trimEnd('/') + "/") }
+    return scanFolders.any { folder ->
+        path == folder || path.startsWith(folder.trimEnd('/') + "/")
+    }
 }
 
 /**
@@ -63,7 +69,7 @@ fun ApplicationPreferences.isUnderScanFolder(path: String?): Boolean {
  * one of its ancestors, so the user can still browse down into a configured scan folder.
  */
 fun ApplicationPreferences.isRelevantFolder(path: String?): Boolean {
-    if (scanFolders.isEmpty()) return true
+    if (scanFolders.isEmpty()) return false
     if (path.isNullOrBlank()) return false
     return scanFolders.any { folder ->
         path == folder ||

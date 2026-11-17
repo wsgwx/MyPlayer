@@ -361,7 +361,8 @@ abstract class MediaDatabase : RoomDatabase() {
         ) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    sql = "ALTER TABLE `media_state` ADD COLUMN `user_comment` TEXT NOT NULL DEFAULT ''",
+                    sql = "ALTER TABLE `media_state` ADD COLUMN" +
+                        " `user_comment` TEXT NOT NULL DEFAULT ''",
                 )
             }
         }

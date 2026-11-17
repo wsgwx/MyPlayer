@@ -547,13 +547,7 @@ private fun VaultGalleryContent(state: VaultUiState, onAction: (VaultAction) -> 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = padding.calculateTopPadding())
-                .padding(start = padding.calculateStartPadding(LocalLayoutDirection.current))
-                .clip(
-                    shape = RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                    ),
-                ),
+                .padding(start = padding.calculateStartPadding(LocalLayoutDirection.current)),
         ) {
             val updatedPadding = padding.copy(
                 top = 0.dp,

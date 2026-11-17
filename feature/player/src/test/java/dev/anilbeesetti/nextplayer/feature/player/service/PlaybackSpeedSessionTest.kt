@@ -6,8 +6,8 @@ import androidx.media3.common.BundleListRetriever
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.session.MediaSession
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import coil3.ImageLoader

@@ -14,9 +14,9 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "dev.anilbeesetti.nextplayer"
-        versionCode = 78
-        versionName = "0.21.0"
+        applicationId = "com.wsgwx.myplayer"
+        versionCode = 1
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
@@ -48,13 +48,11 @@ android {
 
         getByName("debug") {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
         }
 
         create("release-with-debug-signing") {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
-            applicationIdSuffix = ".release"
             matchingFallbacks.add("release")
         }
     }
@@ -84,6 +82,21 @@ android {
                 "x86_64",
             )
             isUniversalApk = true
+        }
+    }
+
+    // Rename APK outputs to MyPlayer-<abi>-v<version>-<buildType>.apk after each assemble.
+    tasks.matching { task -> task.name.startsWith("assemble") }.configureEach {
+        val variantDir = name.removePrefix("assemble").decapitalize()
+        doLast {
+            val outDir = layout.buildDirectory.dir("outputs/apk/$variantDir").get().asFile
+            val pattern = Regex("app-(.+)-(debug|release)[.]apk")
+            outDir.listFiles()?.filter { pattern.matches(it.name) }?.forEach { apk ->
+                val m = pattern.matchEntire(apk.name)!!
+                apk.renameTo(
+                    File(outDir, "MyPlayer-${m.groupValues[1]}-v${android.defaultConfig.versionName}-${m.groupValues[2]}.apk"),
+                )
+            }
         }
     }
 

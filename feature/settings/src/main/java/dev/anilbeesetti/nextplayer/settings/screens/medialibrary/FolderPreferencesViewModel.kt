@@ -46,8 +46,11 @@ class FolderPreferencesViewModel(
                 mediaRepository.observeFolders(),
                 preferencesRepository.applicationPreferences,
             ) { discoveredFolders, preferences ->
+                val visibleDiscovered = discoveredFolders.filter { folder ->
+                    folder.path !in preferences.hiddenScanFolders
+                }
                 val custom = preferences.scanFolders
-                    .filter { path -> discoveredFolders.none { it.path == path } }
+                    .filter { path -> visibleDiscovered.none { it.path == path } }
                     .map { path ->
                         Folder(
                             path = path,
@@ -59,7 +62,7 @@ class FolderPreferencesViewModel(
                             foldersCount = 0,
                         )
                     }
-                (discoveredFolders + custom).sortedBy { it.name.lowercase() }
+                (visibleDiscovered + custom).sortedBy { it.name.lowercase() }
             }.collect { folders ->
                 stateInternal.update { currentState ->
                     currentState.copy(foldersDataState = DataState.Success(value = folders))
@@ -80,6 +83,7 @@ class FolderPreferencesViewModel(
         when (action) {
             is FolderPreferencesUiEvent.NavigateUp -> output.navigateUp()
             is FolderPreferencesUiEvent.UpdateExcludeList -> toggleScanFolder(action.path)
+            is FolderPreferencesUiEvent.RemoveFolder -> removeFolder(action.path)
             is FolderPreferencesUiEvent.AddFolder -> addFolder()
         }
     }
@@ -89,7 +93,26 @@ class FolderPreferencesViewModel(
             val treeUri = systemService.pickFolder() ?: return@launch
             val path = context.getPathFromTreeUri(uri = treeUri) ?: return@launch
             preferencesRepository.updateApplicationPreferences {
-                if (path in it.scanFolders) it else it.copy(scanFolders = it.scanFolders + path)
+                if (path in it.scanFolders) {
+                    it
+                } else {
+                    it.copy(
+                        scanFolders = it.scanFolders + path,
+                        hiddenScanFolders = it.hiddenScanFolders - path,
+                    )
+                }
+            }
+        }
+    }
+
+    /** Removes a folder from the list: unchecks it and keeps it out of the list afterwards. */
+    private fun removeFolder(path: String) {
+        viewModelScope.launch {
+            preferencesRepository.updateApplicationPreferences {
+                it.copy(
+                    scanFolders = it.scanFolders - path,
+                    hiddenScanFolders = it.hiddenScanFolders + path,
+                )
             }
         }
     }
@@ -118,6 +141,8 @@ sealed interface FolderPreferencesUiEvent {
     data object NavigateUp : FolderPreferencesUiEvent
 
     data class UpdateExcludeList(val path: String) : FolderPreferencesUiEvent
+
+    data class RemoveFolder(val path: String) : FolderPreferencesUiEvent
 
     data object AddFolder : FolderPreferencesUiEvent
 }

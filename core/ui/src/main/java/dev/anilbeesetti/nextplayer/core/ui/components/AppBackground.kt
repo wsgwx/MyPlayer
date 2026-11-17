@@ -72,7 +72,12 @@ private fun rememberUriBitmap(uriString: String?): ImageBitmap? {
     ) {
         value = withContext(context = Dispatchers.IO) {
             if (uriString.isNullOrBlank()) return@withContext null
-            runCatching { decodeSampledBitmap(context = context, uriString = uriString) }
+            runCatching {
+                decodeSampledBitmap(
+                    context = context,
+                    uriString = uriString,
+                )
+            }
                 .getOrNull()
                 ?.asImageBitmap()
         }
@@ -88,7 +93,13 @@ private fun decodeSampledBitmap(
     val uri = Uri.parse(uriString)
     val resolver = context.contentResolver
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    resolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(
+            it,
+            null,
+            bounds,
+        )
+    }
     if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
     var sampleSize = 1
@@ -98,5 +109,11 @@ private fun decodeSampledBitmap(
         inSampleSize = sampleSize
         inPreferredConfig = Bitmap.Config.RGB_565
     }
-    return resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
+    return resolver.openInputStream(uri)?.use {
+        BitmapFactory.decodeStream(
+            it,
+            null,
+            options,
+        )
+    }
 }

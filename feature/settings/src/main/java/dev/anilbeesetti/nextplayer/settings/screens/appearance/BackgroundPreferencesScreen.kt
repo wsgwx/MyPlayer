@@ -43,7 +43,10 @@ import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
 @Composable
 fun BackgroundPreferencesScreen(viewModel: BackgroundPreferencesViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    BackgroundPreferencesScreenContent(state = state, onAction = viewModel::onAction)
+    BackgroundPreferencesScreenContent(
+        state = state,
+        onAction = viewModel::onAction,
+    )
 }
 
 @OptIn(

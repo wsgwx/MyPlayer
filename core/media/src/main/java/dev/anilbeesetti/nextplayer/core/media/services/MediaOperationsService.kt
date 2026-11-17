@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface MediaOperationsService {
     fun initialize(activity: ComponentActivity)
+
     /**
      * Removes the given videos from the library while leaving their files untouched.
      *

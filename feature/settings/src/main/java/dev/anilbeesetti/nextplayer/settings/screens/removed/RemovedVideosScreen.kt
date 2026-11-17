@@ -38,10 +38,16 @@ import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
 @Composable
 fun RemovedVideosScreen(viewModel: RemovedVideosViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    RemovedVideosScreenContent(state = state, onAction = viewModel::onAction)
+    RemovedVideosScreenContent(
+        state = state,
+        onAction = viewModel::onAction,
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 private fun RemovedVideosScreenContent(
     state: RemovedVideosUiState,
@@ -96,7 +102,10 @@ private fun RemovedVideosScreenContent(
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                itemsIndexed(state.videos, key = { _, item -> item.uriString }) { index, item ->
+                itemsIndexed(
+                    state.videos,
+                    key = { _, item -> item.uriString },
+                ) { index, item ->
                     RemovedVideoItemRow(
                         item = item,
                         isFirst = index == 0,

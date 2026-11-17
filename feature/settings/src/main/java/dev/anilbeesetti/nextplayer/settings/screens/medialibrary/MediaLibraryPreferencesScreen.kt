@@ -197,7 +197,6 @@ private fun MediaLibraryPreferencesScreenContent(
             }
         }
     }
-
 }
 
 @PreviewLightDark

@@ -17,8 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
@@ -268,108 +268,108 @@ private fun FolderGridItem(
         verticalArrangement = Arrangement.spacedBy(space = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-            Column(
-                modifier = modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.folder_thumb),
-                        contentDescription = "",
-                        tint = MaterialTheme.colorScheme.surfaceContainerHigh,
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.folder_thumb),
+                    contentDescription = "",
+                    tint = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier
+                        .width(
+                            width = min(
+                                90.dp,
+                                b =
+                                    LocalConfiguration.current.screenWidthDp.dp * 0.3f,
+                            ),
+                        )
+                        .aspectRatio(ratio = 20 / 17f),
+                )
+
+                if (preferences.showFolderDurationField) {
+                    InfoChip(
+                        text = Utils.formatDurationMillis(folder.totalDuration),
                         modifier = Modifier
-                            .width(
-                                width = min(
-                                    90.dp,
-                                    b =
-                                        LocalConfiguration.current.screenWidthDp.dp * 0.3f,
-                                ),
-                            )
-                            .aspectRatio(ratio = 20 / 17f),
+                            .padding(5.dp)
+                            .padding(bottom = 3.dp)
+                            .align(Alignment.BottomEnd),
+                        backgroundColor = Color.Black.copy(alpha = 0.6f),
+                        contentColor = Color.White,
+                        shape = MaterialTheme.shapes.extraSmall,
                     )
-
-                    if (preferences.showFolderDurationField) {
-                        InfoChip(
-                            text = Utils.formatDurationMillis(folder.totalDuration),
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .padding(bottom = 3.dp)
-                                .align(Alignment.BottomEnd),
-                            backgroundColor = Color.Black.copy(alpha = 0.6f),
-                            contentColor = Color.White,
-                            shape = MaterialTheme.shapes.extraSmall,
-                        )
-                    }
-
-                    if (folder.newVideosCount > 0) {
-                        NewVideosCountBadge(
-                            count = folder.newVideosCount,
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = 4.dp),
-                        )
-                    }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = folder.name,
-                        maxLines = 2,
-                        style = MaterialTheme.typography.titleMedium,
-                        overflow = TextOverflow.Ellipsis,
-                        color = if (isRecentlyPlayedFolder && preferences.markLastPlayedMedia) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                        textAlign = TextAlign.Center,
-                    )
-                    val mediaCount = if (folder.videosCount > 0) {
-                        "${folder.videosCount} " +
-                            stringResource(
-                                id =
-                                    R.string.video.takeIf {
-                                        folder.videosCount == 1
-                                    } ?: R.string.videos,
-                            )
-                    } else {
-                        null
-                    }
-                    val folderCount = if (folder.foldersCount > 0) {
-                        "${folder.foldersCount} " +
-                            stringResource(
-                                id =
-                                    R.string.folder.takeIf { folder.foldersCount == 1 }
-                                        ?: R.string.folders,
-                            )
-                    } else {
-                        null
-                    }
-
-                    Text(
-                        text = buildString {
-                            mediaCount?.let {
-                                append(it)
-                                folderCount?.let {
-                                    append(", ")
-                                    append("\u00A0")
-                                }
-                            }
-                            folderCount?.let { append(it) }
-                        },
-                        maxLines = 2,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Normal,
-                        ),
-                        textAlign = TextAlign.Center,
+                if (folder.newVideosCount > 0) {
+                    NewVideosCountBadge(
+                        count = folder.newVideosCount,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 4.dp),
                     )
                 }
             }
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = folder.name,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.titleMedium,
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isRecentlyPlayedFolder && preferences.markLastPlayedMedia) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    textAlign = TextAlign.Center,
+                )
+                val mediaCount = if (folder.videosCount > 0) {
+                    "${folder.videosCount} " +
+                        stringResource(
+                            id =
+                                R.string.video.takeIf {
+                                    folder.videosCount == 1
+                                } ?: R.string.videos,
+                        )
+                } else {
+                    null
+                }
+                val folderCount = if (folder.foldersCount > 0) {
+                    "${folder.foldersCount} " +
+                        stringResource(
+                            id =
+                                R.string.folder.takeIf { folder.foldersCount == 1 }
+                                    ?: R.string.folders,
+                        )
+                } else {
+                    null
+                }
+
+                Text(
+                    text = buildString {
+                        mediaCount?.let {
+                            append(it)
+                            folderCount?.let {
+                                append(", ")
+                                append("\u00A0")
+                            }
+                        }
+                        folderCount?.let { append(it) }
+                    },
+                    maxLines = 2,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Normal,
+                    ),
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
+    }
 }
 
 /** Rounded badge showing the full number of new videos inside a folder. */

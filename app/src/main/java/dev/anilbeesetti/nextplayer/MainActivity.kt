@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -47,6 +46,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -65,16 +65,16 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dev.anilbeesetti.nextplayer.core.common.extensions.isTelevision
 import dev.anilbeesetti.nextplayer.core.common.service.system.SystemService
 import dev.anilbeesetti.nextplayer.core.media.services.MediaOperationsService
+import dev.anilbeesetti.nextplayer.core.model.BackgroundConfig
+import dev.anilbeesetti.nextplayer.core.model.BackgroundType
 import dev.anilbeesetti.nextplayer.core.model.ThemeConfig
+import dev.anilbeesetti.nextplayer.core.model.ThemePalette
+import dev.anilbeesetti.nextplayer.core.ui.components.AppBackground
 import dev.anilbeesetti.nextplayer.core.ui.components.LocalNavigationBottomPadding
 import dev.anilbeesetti.nextplayer.core.ui.components.LocalTopLevelBottomBarVisibleSetter
 import dev.anilbeesetti.nextplayer.core.ui.components.LocalTopLevelFabSetter
 import dev.anilbeesetti.nextplayer.core.ui.components.TopLevelFabState
 import dev.anilbeesetti.nextplayer.core.ui.components.thenIf
-import dev.anilbeesetti.nextplayer.core.model.BackgroundConfig
-import dev.anilbeesetti.nextplayer.core.model.BackgroundType
-import dev.anilbeesetti.nextplayer.core.model.ThemePalette
-import dev.anilbeesetti.nextplayer.core.ui.components.AppBackground
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
 import dev.anilbeesetti.nextplayer.navigation.NextNavigationRail
 import dev.anilbeesetti.nextplayer.navigation.TopLevelDestination
@@ -164,99 +164,100 @@ class MainActivity : FragmentActivity() {
                     background = preferences?.background ?: BackgroundConfig(),
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.ui.graphics.Color.Transparent,
-                ) {
-                    val navState = rememberTopLevelNavState()
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = androidx.compose.ui.graphics.Color.Transparent,
+                    ) {
+                        val navState = rememberTopLevelNavState()
 
-
-                    val mediaStack = navState.backStacks.getValue(TopLevelDestination.MEDIA.route)
-
-                    val provider = entryProvider {
-                        mediaNavGraph(
-                            context = this@MainActivity,
-                            backStack = mediaStack,
+                        val mediaStack = navState.backStacks.getValue(
+                            TopLevelDestination.MEDIA.route,
                         )
-                        settingsNavGraph(
-                            context = this@MainActivity,
-                            backStack = navState.currentStack,
-                        )
-                    }
 
-                    val topLevelFabStates =
-                        remember { mutableStateMapOf<String, TopLevelFabState>() }
-                    var showTopLevelBottomBar by remember { mutableStateOf(value = true) }
-                    NavigationLayout(
-                        state = navState,
-                        fabStates = topLevelFabStates,
-                        showBottomBar = showTopLevelBottomBar,
-                    ) { layoutPaddingValues ->
-                        val railPadding = layoutPaddingValues.calculateStartPadding(
-                            LocalLayoutDirection.current,
-                        )
-                        val navigationInsetsDecorator = remember(
-                            navState,
-                            railPadding,
-                        ) {
-                            NavEntryDecorator<NavKey> { entry ->
-                                // Reserve rail space per entry without resizing the animated display.
-                                Box(
-                                    navState.navigationTransitionModifier(entry).thenIf(
-                                        navState.topLevelContentKeys.contains(entry.contentKey),
-                                    ) {
-                                        padding(start = railPadding)
-                                            .consumeWindowInsets(
-                                                WindowInsets.displayCutout.only(
-                                                    WindowInsetsSides.Start,
-                                                ),
-                                            )
-                                    },
-                                ) { entry.Content() }
-                            }
-                        }
-                        CompositionLocalProvider(
-                            LocalNavigationBottomPadding provides
-                                layoutPaddingValues.calculateBottomPadding(),
-                            LocalTopLevelBottomBarVisibleSetter provides
-                                { showTopLevelBottomBar = it },
-                            LocalTopLevelFabSetter provides { key, state ->
-                                if (state == null) {
-                                    topLevelFabStates.remove(key = key)
-                                } else {
-                                    topLevelFabStates[key] = state
-                                }
-                            },
-                        ) {
-                            NavDisplay(
-                                entries = navState.rememberEntries(
-                                    entryProvider = provider,
-                                    entryDecorator = navigationInsetsDecorator,
-                                ),
-                                onBack = { navState.goBack() },
-                                transitionSpec = {
-                                    navState.navigationTransition(
-                                        initialState = initialState,
-                                        targetState = targetState,
-                                    )
-                                },
-                                popTransitionSpec = {
-                                    navState.navigationTransition(
-                                        initialState = initialState,
-                                        targetState = targetState,
-                                    )
-                                },
-                                predictivePopTransitionSpec = {
-                                    navState.navigationTransition(
-                                        initialState = initialState,
-                                        targetState = targetState,
-                                        isPredictive = true,
-                                    )
-                                },
+                        val provider = entryProvider {
+                            mediaNavGraph(
+                                context = this@MainActivity,
+                                backStack = mediaStack,
+                            )
+                            settingsNavGraph(
+                                context = this@MainActivity,
+                                backStack = navState.currentStack,
                             )
                         }
+
+                        val topLevelFabStates =
+                            remember { mutableStateMapOf<String, TopLevelFabState>() }
+                        var showTopLevelBottomBar by remember { mutableStateOf(value = true) }
+                        NavigationLayout(
+                            state = navState,
+                            fabStates = topLevelFabStates,
+                            showBottomBar = showTopLevelBottomBar,
+                        ) { layoutPaddingValues ->
+                            val railPadding = layoutPaddingValues.calculateStartPadding(
+                                LocalLayoutDirection.current,
+                            )
+                            val navigationInsetsDecorator = remember(
+                                navState,
+                                railPadding,
+                            ) {
+                                NavEntryDecorator<NavKey> { entry ->
+                                    // Reserve rail space per entry without resizing the animated display.
+                                    Box(
+                                        navState.navigationTransitionModifier(entry).thenIf(
+                                            navState.topLevelContentKeys.contains(entry.contentKey),
+                                        ) {
+                                            padding(start = railPadding)
+                                                .consumeWindowInsets(
+                                                    WindowInsets.displayCutout.only(
+                                                        WindowInsetsSides.Start,
+                                                    ),
+                                                )
+                                        },
+                                    ) { entry.Content() }
+                                }
+                            }
+                            CompositionLocalProvider(
+                                LocalNavigationBottomPadding provides
+                                    layoutPaddingValues.calculateBottomPadding(),
+                                LocalTopLevelBottomBarVisibleSetter provides
+                                    { showTopLevelBottomBar = it },
+                                LocalTopLevelFabSetter provides { key, state ->
+                                    if (state == null) {
+                                        topLevelFabStates.remove(key = key)
+                                    } else {
+                                        topLevelFabStates[key] = state
+                                    }
+                                },
+                            ) {
+                                NavDisplay(
+                                    entries = navState.rememberEntries(
+                                        entryProvider = provider,
+                                        entryDecorator = navigationInsetsDecorator,
+                                    ),
+                                    onBack = { navState.goBack() },
+                                    transitionSpec = {
+                                        navState.navigationTransition(
+                                            initialState = initialState,
+                                            targetState = targetState,
+                                        )
+                                    },
+                                    popTransitionSpec = {
+                                        navState.navigationTransition(
+                                            initialState = initialState,
+                                            targetState = targetState,
+                                        )
+                                    },
+                                    predictivePopTransitionSpec = {
+                                        navState.navigationTransition(
+                                            initialState = initialState,
+                                            targetState = targetState,
+                                            isPredictive = true,
+                                        )
+                                    },
+                                )
+                            }
+                        }
                     }
-                }
                 }
             }
         }

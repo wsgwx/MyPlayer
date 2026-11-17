@@ -43,6 +43,9 @@ data class MediumStateEntity(
     val subtitleSpeed: Float = 1f,
     @ColumnInfo(name = "user_rating")
     val userRating: Float? = null,
-    @ColumnInfo(name = "user_comment", defaultValue = "''")
+    @ColumnInfo(
+        name = "user_comment",
+        defaultValue = "''",
+    )
     val userComment: String = "",
 )

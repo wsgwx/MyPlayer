@@ -113,6 +113,9 @@ private fun FolderPreferencesScreenContent(
                             onClick = {
                                 onAction(FolderPreferencesUiEvent.UpdateExcludeList(folder.path))
                             },
+                            onDelete = {
+                                onAction(FolderPreferencesUiEvent.RemoveFolder(folder.path))
+                            },
                             isFirstItem = false,
                             isLastItem = index == folders.lastIndex,
                         )

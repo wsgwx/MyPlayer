@@ -46,8 +46,14 @@ internal fun SelectionAction(
                 shape = RoundedCornerShape(12.dp),
             )
             .clip(shape = RoundedCornerShape(12.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .clickable(
+                enabled = enabled,
+                onClick = onClick,
+            )
+            .padding(
+                horizontal = 8.dp,
+                vertical = 6.dp,
+            ),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

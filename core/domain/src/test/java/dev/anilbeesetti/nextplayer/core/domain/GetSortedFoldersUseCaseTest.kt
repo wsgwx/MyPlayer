@@ -5,6 +5,7 @@ import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakePreferencesRepo
 import dev.anilbeesetti.nextplayer.core.model.Video
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -13,6 +14,15 @@ class GetSortedFoldersUseCaseTest {
 
     private val mediaRepository = FakeMediaRepository()
     private val preferencesRepository = FakePreferencesRepository()
+
+    init {
+        // New semantics: an empty scan-folder whitelist shows nothing.
+        runBlocking {
+            preferencesRepository.updateApplicationPreferences {
+                it.copy(scanFolders = listOf("/storage/emulated/0/Movies"))
+            }
+        }
+    }
     private val useCase = GetSortedFoldersUseCase(
         mediaRepository = mediaRepository,
         preferencesRepository = preferencesRepository,

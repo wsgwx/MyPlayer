@@ -10,8 +10,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -64,13 +64,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -110,9 +110,9 @@ import dev.anilbeesetti.nextplayer.core.ui.components.LocalNavigationBottomPaddi
 import dev.anilbeesetti.nextplayer.core.ui.components.NextDialog
 import dev.anilbeesetti.nextplayer.core.ui.components.NextOutlinedTextField
 import dev.anilbeesetti.nextplayer.core.ui.components.NextTopAppBar
-import dev.anilbeesetti.nextplayer.core.ui.components.horizontalSwipe
 import dev.anilbeesetti.nextplayer.core.ui.components.TextIconToggleButton
 import dev.anilbeesetti.nextplayer.core.ui.components.TopLevelFabKey
+import dev.anilbeesetti.nextplayer.core.ui.components.horizontalSwipe
 import dev.anilbeesetti.nextplayer.core.ui.components.rememberRestorableFocusState
 import dev.anilbeesetti.nextplayer.core.ui.components.thenIf
 import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusRing
@@ -125,8 +125,8 @@ import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.CenterCircularProgressBar
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.MediaInfoDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.MediaView
-import dev.anilbeesetti.nextplayer.feature.videopicker.composables.QuickSettingsDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.NoVideosFound
+import dev.anilbeesetti.nextplayer.feature.videopicker.composables.QuickSettingsDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.RatingDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.RenameDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.SelectionActionsDock
@@ -246,387 +246,399 @@ internal fun MediaPickerScreenContent(
             ),
     ) {
         Scaffold(
-        topBar = {
-            NextTopAppBar(
-                title = {
-                    val titleText = (state.folderName ?: stringResource(R.string.app_name))
-                        .takeIf { !selectionManager.isInSelectionMode } ?: ""
-                    Text(
-                        text = titleText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontWeight = FontWeight.Bold.takeIf { state.folderName == null },
-                    )
-                },
-                navigationIcon = {
-                    if (selectionManager.isInSelectionMode) {
-                        Row(
-                            modifier = Modifier
-                                .clip(shape = CircleShape)
-                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                .clickable { selectionManager.exitSelectionMode() }
-                                .padding(8.dp)
-                                .padding(end = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(
-                                imageVector = NextIcons.Close,
-                                contentDescription = stringResource(id = R.string.navigate_up),
-                            )
-                            Text(
-                                text = stringResource(
-                                    R.string.m_n_selected,
-                                    selectedItemsSize,
-                                    totalItemsSize,
-                                ),
-                                style = MaterialTheme.typography.labelLarge,
-                            )
+            topBar = {
+                NextTopAppBar(
+                    title = {
+                        val titleText = (state.folderName ?: stringResource(R.string.app_name))
+                            .takeIf { !selectionManager.isInSelectionMode } ?: ""
+                        Text(
+                            text = titleText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Bold.takeIf { state.folderName == null },
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    },
+                    navigationIcon = {
+                        if (selectionManager.isInSelectionMode) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(shape = CircleShape)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .clickable { selectionManager.exitSelectionMode() }
+                                    .padding(8.dp)
+                                    .padding(end = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Icon(
+                                    imageVector = NextIcons.Close,
+                                    contentDescription = stringResource(id = R.string.navigate_up),
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.m_n_selected,
+                                        selectedItemsSize,
+                                        totalItemsSize,
+                                    ),
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                        } else if (state.folderName != null) {
+                            FilledTonalIconButton(
+                                onClick = { onAction(MediaPickerAction.OnNavigateUpClick) },
+                                modifier = topBarDownModifier
+                                    .tvFocusRing(isTv = isTv)
+                                    .size(40.dp),
+                            ) {
+                                Icon(
+                                    imageVector = NextIcons.ArrowBack,
+                                    contentDescription = stringResource(id = R.string.navigate_up),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                         }
-                    } else if (state.folderName != null) {
-                        FilledTonalIconButton(
-                            onClick = { onAction(MediaPickerAction.OnNavigateUpClick) },
-                            modifier = topBarDownModifier.tvFocusRing(isTv = isTv),
-                        ) {
-                            Icon(
-                                imageVector = NextIcons.ArrowBack,
-                                contentDescription = stringResource(id = R.string.navigate_up),
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    if (selectionManager.isInSelectionMode) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                if (selectedItemsSize != totalItemsSize) {
-                                    val folder = (state.mediaDataState as? DataState.Success)?.value
-                                    if (folder != null) {
-                                        folder.folders.forEach {
-                                            selectionManager.selectFolder(folder = it)
+                    },
+                    actions = {
+                        if (selectionManager.isInSelectionMode) {
+                            FilledTonalIconButton(
+                                modifier = topBarDownModifier
+                                    .tvFocusRing(isTv = isTv)
+                                    .size(40.dp),
+                                onClick = {
+                                    if (selectedItemsSize != totalItemsSize) {
+                                        val holder = state.mediaDataState as? DataState.Success
+                                        val folder = holder?.value
+                                        if (folder != null) {
+                                            folder.folders.forEach {
+                                                selectionManager.selectFolder(folder = it)
+                                            }
+                                            folder.videos.forEach {
+                                                selectionManager.selectVideo(video = it)
+                                            }
                                         }
-                                        folder.videos.forEach {
-                                            selectionManager.selectVideo(video = it)
-                                        }
+                                    } else {
+                                        selectionManager.clearSelection()
                                     }
-                                } else {
-                                    selectionManager.clearSelection()
-                                }
-                            },
-                            modifier = topBarDownModifier.tvFocusRing(isTv = isTv),
-                        ) {
-                            Icon(
-                                imageVector = if (selectedItemsSize != totalItemsSize) {
-                                    NextIcons.SelectAll
-                                } else {
-                                    NextIcons.DeselectAll
                                 },
-                                contentDescription = if (selectedItemsSize != totalItemsSize) {
-                                    stringResource(R.string.select_all)
-                                } else {
-                                    stringResource(R.string.deselect_all)
-                                },
-                            )
-                        }
-                    } else {
-                        IconButton(
-                            onClick = { onAction(MediaPickerAction.OpenAppearance) },
-                            modifier = topBarDownModifier.tvFocusRing(isTv = isTv),
-                        ) {
-                            Icon(
-                                imageVector = NextIcons.Appearance,
-                                contentDescription = stringResource(R.string.appearance_name),
-                            )
-                        }
-                        val layoutMode = state.preferences.mediaLayoutMode
-                        IconButton(
-                            onClick = {
-                                onAction(
-                                    MediaPickerAction.UpdateMenu(
-                                        preferences = state.preferences.copy(
-                                            mediaLayoutMode = if (
-                                                layoutMode == MediaLayoutMode.LIST
-                                            ) {
-                                                MediaLayoutMode.GRID
-                                            } else {
-                                                MediaLayoutMode.LIST
-                                            },
-                                        ),
+                            ) {
+                                Icon(
+                                    imageVector = if (selectedItemsSize != totalItemsSize) {
+                                        NextIcons.SelectAll
+                                    } else {
+                                        NextIcons.DeselectAll
+                                    },
+                                    contentDescription = if (selectedItemsSize != totalItemsSize) {
+                                        stringResource(R.string.select_all)
+                                    } else {
+                                        stringResource(R.string.deselect_all)
+                                    },
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { onAction(MediaPickerAction.OpenAppearance) },
+                                modifier = topBarDownModifier
+                                    .tvFocusRing(isTv = isTv)
+                                    .size(40.dp),
+                            ) {
+                                Icon(
+                                    imageVector = NextIcons.Appearance,
+                                    modifier = Modifier.size(20.dp),
+                                    contentDescription = stringResource(R.string.appearance_name),
+                                )
+                            }
+                            val layoutMode = state.preferences.mediaLayoutMode
+                            // Not an IconButton: its internal clickable consumes long presses, and
+                            // long-press here opens the quick settings (sorting etc.).
+                            Box(
+                                modifier = topBarDownModifier
+                                    .tvFocusRing(isTv = isTv)
+                                    .size(40.dp)
+                                    .clip(shape = CircleShape)
+                                    .combinedClickable(
+                                        onClick = {
+                                            onAction(
+                                                MediaPickerAction.UpdateMenu(
+                                                    preferences = state.preferences.copy(
+                                                        mediaLayoutMode = if (
+                                                            layoutMode == MediaLayoutMode.LIST
+                                                        ) {
+                                                            MediaLayoutMode.GRID
+                                                        } else {
+                                                            MediaLayoutMode.LIST
+                                                        },
+                                                    ),
+                                                ),
+                                            )
+                                        },
+                                        onLongClick = { showQuickSettings = true },
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (layoutMode == MediaLayoutMode.LIST) {
+                                        NextIcons.DashBoard
+                                    } else {
+                                        NextIcons.Sensitivity
+                                    },
+                                    modifier = Modifier.size(20.dp),
+                                    contentDescription = stringResource(
+                                        id = if (layoutMode == MediaLayoutMode.LIST) {
+                                            R.string.grid
+                                        } else {
+                                            R.string.list
+                                        },
                                     ),
                                 )
-                            },
-                            modifier = topBarDownModifier
-                                .tvFocusRing(isTv = isTv)
-                                .combinedClickable(
-                                    onClick = {
-                                        onAction(
-                                            MediaPickerAction.UpdateMenu(
-                                                preferences = state.preferences.copy(
-                                                    mediaLayoutMode = if (
-                                                        layoutMode == MediaLayoutMode.LIST
-                                                    ) {
-                                                        MediaLayoutMode.GRID
-                                                    } else {
-                                                        MediaLayoutMode.LIST
-                                                    },
-                                                ),
-                                            ),
-                                        )
-                                    },
-                                    onLongClick = { showQuickSettings = true },
-                                ),
-                        ) {
-                            Icon(
-                                imageVector = if (layoutMode == MediaLayoutMode.LIST) {
-                                    NextIcons.DashBoard
-                                } else {
-                                    NextIcons.Sensitivity
-                                },
-                                contentDescription = stringResource(
-                                    id = if (layoutMode == MediaLayoutMode.LIST) {
-                                        R.string.grid
-                                    } else {
-                                        R.string.list
-                                    },
-                                ),
-                            )
+                            }
+                            IconButton(
+                                onClick = { onAction(MediaPickerAction.OnSettingsClick) },
+                                modifier = topBarDownModifier
+                                    .tvFocusRing(isTv = isTv)
+                                    .size(40.dp),
+                            ) {
+                                Icon(
+                                    imageVector = NextIcons.Settings,
+                                    modifier = Modifier.size(20.dp),
+                                    contentDescription = stringResource(id = R.string.settings),
+                                )
+                            }
                         }
-                        IconButton(
-                            onClick = { onAction(MediaPickerAction.OnSettingsClick) },
-                            modifier = topBarDownModifier.tvFocusRing(isTv = isTv),
-                        ) {
-                            Icon(
-                                imageVector = NextIcons.Settings,
-                                contentDescription = stringResource(id = R.string.settings),
-                            )
-                        }
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            SelectionActionsSheet(
-                show =
-                    selectionManager.isInSelectionMode &&
-                        selectionManager.selectionItems.isNotEmpty(),
-                contentFocusRequester = focusState.requester,
-                showRenameAction = selectionManager.isSingleVideoSelected,
-                showInfoAction = selectionManager.isSingleVideoSelected,
-                showRateAction = selectionManager.isSingleVideoSelected,
-                onPlayAction = {
-                    onAction(MediaPickerAction.PlaySelectedItems(selectionManager.selectionItems))
-                    selectionManager.exitSelectionMode()
-                },
-                onHideAction = {
-                    onAction(MediaPickerAction.HideSelectedItems(selectionManager.selectionItems))
-                    selectionManager.exitSelectionMode()
-                },
-                onRenameAction = {
-                    val selectedVideo =
-                        selectionManager.selectionItems.firstOrNull()
-                            ?: return@SelectionActionsSheet
-                    val video = (state.mediaDataState as? DataState.Success)?.value?.videos
-                        ?.find { it.uriString == selectedVideo.id } ?: return@SelectionActionsSheet
-                    showRenameActionFor = video
-                },
-                onInfoAction = {
-                    val selectedVideo =
-                        selectionManager.selectionItems.firstOrNull()
-                            ?: return@SelectionActionsSheet
-                    val video = (state.mediaDataState as? DataState.Success)?.value?.videos
-                        ?.find { it.uriString == selectedVideo.id } ?: return@SelectionActionsSheet
-                    onAction(MediaPickerAction.ShowMediaInfo(video = video))
-                    selectionManager.exitSelectionMode()
-                },
-                onRateAction = {
-                    val selectedVideo =
-                        selectionManager.selectionItems.firstOrNull()
-                            ?: return@SelectionActionsSheet
-                    val video = (state.mediaDataState as? DataState.Success)?.value?.videos
-                        ?.find { it.uriString == selectedVideo.id } ?: return@SelectionActionsSheet
-                    showRatingActionFor = video
-                    selectionManager.exitSelectionMode()
-                },
-                onDeleteAction = { showDeleteVideosConfirmation = true },
-            )
-        },
-        floatingActionButton = {
-            if (state.folderName != null && !selectionManager.isInSelectionMode) {
-                FloatingActionButton(
-                    onClick = onFabClick,
-                    modifier = Modifier
-                        .tvFocusRing(shape = MaterialTheme.shapes.large)
-                        .focusProperties { if (isTv && hasMedia) up = focusState.requester },
-                    shape = MaterialTheme.shapes.large,
-                ) {
-                    Icon(
-                        imageVector = NextIcons.Play,
-                        contentDescription = stringResource(R.string.play),
-                    )
-                }
-            }
-        },
-        containerColor = Color.Transparent,
-    ) { scaffoldPadding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(scaffoldPadding.copy(bottom = 0.dp))
-                .clip(
-                    shape = RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                    ),
+                    },
                 )
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            if (!permissionState.status.isGranted) {
-                PermissionMissingView(
-                    isGranted = permissionState.status.isGranted,
-                    showRationale = permissionState.status.shouldShowRationale,
-                    permission = permissionState.permission,
-                    launchPermissionRequest = { permissionState.launchPermissionRequest() },
-                ) {}
-                return@Scaffold
-            }
-            when (state.mediaDataState) {
-                is DataState.Error -> {
-                }
-
-                is DataState.Loading -> {
-                    CenterCircularProgressBar()
-                }
-
-                is DataState.Success -> {
-                    val successContent: @Composable () -> Unit = {
-                        val updatedScaffoldPadding = scaffoldPadding.copy(
-                            top = 0.dp,
-                            start = 0.dp,
-                            bottom =
-                                scaffoldPadding.calculateBottomPadding() + navigationBottomPadding,
+            },
+            bottomBar = {
+                SelectionActionsSheet(
+                    show =
+                        selectionManager.isInSelectionMode &&
+                            selectionManager.selectionItems.isNotEmpty(),
+                    contentFocusRequester = focusState.requester,
+                    showRenameAction = selectionManager.isSingleVideoSelected,
+                    showInfoAction = selectionManager.isSingleVideoSelected,
+                    showRateAction = selectionManager.isSingleVideoSelected,
+                    onPlayAction = {
+                        onAction(
+                            MediaPickerAction.PlaySelectedItems(selectionManager.selectionItems),
                         )
-                        val mediaHolder = state.mediaDataState.value
-                        if (mediaHolder == null ||
-                            (mediaHolder.folders.isEmpty() && mediaHolder.videos.isEmpty())
-                        ) {
-                            NoVideosFound(contentPadding = updatedScaffoldPadding)
-                        } else {
-                            MediaView(
-                                recentlyPlayedVideo = state.recentlyPlayedVideo,
-                                recentlyPlayedFolder = state.recentlyPlayedFolder,
-                                mediaHolder = mediaHolder,
-                                preferences = state.preferences,
-                                onFolderClick = {
-                                    onAction(MediaPickerAction.OnFolderClick(folderPath = it))
-                                },
-                                onVideoClick = {
-                                    onAction(MediaPickerAction.OnPlayVideo(uri = it))
-                                },
-                                selectionManager = selectionManager,
-                                lazyGridState = lazyGridState,
-                                focusState = focusState,
-                                contentPadding = updatedScaffoldPadding,
-                            )
-                        }
+                        selectionManager.exitSelectionMode()
+                    },
+                    onHideAction = {
+                        onAction(
+                            MediaPickerAction.HideSelectedItems(selectionManager.selectionItems),
+                        )
+                        selectionManager.exitSelectionMode()
+                    },
+                    onRenameAction = {
+                        val selectedVideo =
+                            selectionManager.selectionItems.firstOrNull()
+                                ?: return@SelectionActionsSheet
+                        val video = (state.mediaDataState as? DataState.Success)?.value?.videos
+                            ?.find { it.uriString == selectedVideo.id }
+                            ?: return@SelectionActionsSheet
+                        showRenameActionFor = video
+                    },
+                    onInfoAction = {
+                        val selectedVideo =
+                            selectionManager.selectionItems.firstOrNull()
+                                ?: return@SelectionActionsSheet
+                        val video = (state.mediaDataState as? DataState.Success)?.value?.videos
+                            ?.find { it.uriString == selectedVideo.id }
+                            ?: return@SelectionActionsSheet
+                        onAction(MediaPickerAction.ShowMediaInfo(video = video))
+                        selectionManager.exitSelectionMode()
+                    },
+                    onRateAction = {
+                        val selectedVideo =
+                            selectionManager.selectionItems.firstOrNull()
+                                ?: return@SelectionActionsSheet
+                        val video = (state.mediaDataState as? DataState.Success)?.value?.videos
+                            ?.find { it.uriString == selectedVideo.id }
+                            ?: return@SelectionActionsSheet
+                        showRatingActionFor = video
+                        selectionManager.exitSelectionMode()
+                    },
+                    onDeleteAction = { showDeleteVideosConfirmation = true },
+                )
+            },
+            floatingActionButton = {
+                if (state.folderName != null && !selectionManager.isInSelectionMode) {
+                    FloatingActionButton(
+                        onClick = onFabClick,
+                        modifier = Modifier
+                            .tvFocusRing(shape = MaterialTheme.shapes.large)
+                            .focusProperties { if (isTv && hasMedia) up = focusState.requester },
+                        shape = MaterialTheme.shapes.large,
+                    ) {
+                        Icon(
+                            imageVector = NextIcons.Play,
+                            contentDescription = stringResource(R.string.play),
+                        )
                     }
-                    if (isTv) {
-                        successContent()
-                    } else {
-                        PullToRefreshBox(
-                            isRefreshing = state.refreshing,
-                            onRefresh = { onAction(MediaPickerAction.Refresh) },
-                        ) { successContent() }
+                }
+            },
+            containerColor = Color.Transparent,
+        ) { scaffoldPadding ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(scaffoldPadding.copy(bottom = 0.dp)),
+            ) {
+                if (!permissionState.status.isGranted) {
+                    PermissionMissingView(
+                        isGranted = permissionState.status.isGranted,
+                        showRationale = permissionState.status.shouldShowRationale,
+                        permission = permissionState.permission,
+                        launchPermissionRequest = { permissionState.launchPermissionRequest() },
+                    ) {}
+                    return@Scaffold
+                }
+                when (state.mediaDataState) {
+                    is DataState.Error -> {
+                    }
+
+                    is DataState.Loading -> {
+                        CenterCircularProgressBar()
+                    }
+
+                    is DataState.Success -> {
+                        val successContent: @Composable () -> Unit = {
+                            val updatedScaffoldPadding = scaffoldPadding.copy(
+                                top = 0.dp,
+                                start = 0.dp,
+                                bottom =
+                                    scaffoldPadding.calculateBottomPadding() +
+                                        navigationBottomPadding,
+                            )
+                            val mediaHolder = state.mediaDataState.value
+                            if (mediaHolder == null ||
+                                (mediaHolder.folders.isEmpty() && mediaHolder.videos.isEmpty())
+                            ) {
+                                NoVideosFound(
+                                    contentPadding = updatedScaffoldPadding,
+                                    subtitle = if (state.preferences.scanFolders.isEmpty()) {
+                                        stringResource(R.string.scan_folders_empty_hint)
+                                    } else {
+                                        null
+                                    },
+                                )
+                            } else {
+                                MediaView(
+                                    recentlyPlayedVideo = state.recentlyPlayedVideo,
+                                    recentlyPlayedFolder = state.recentlyPlayedFolder,
+                                    mediaHolder = mediaHolder,
+                                    preferences = state.preferences,
+                                    onFolderClick = {
+                                        onAction(MediaPickerAction.OnFolderClick(folderPath = it))
+                                    },
+                                    onVideoClick = {
+                                        onAction(MediaPickerAction.OnPlayVideo(uri = it))
+                                    },
+                                    selectionManager = selectionManager,
+                                    lazyGridState = lazyGridState,
+                                    focusState = focusState,
+                                    contentPadding = updatedScaffoldPadding,
+                                )
+                            }
+                        }
+                        if (isTv) {
+                            successContent()
+                        } else {
+                            PullToRefreshBox(
+                                isRefreshing = state.refreshing,
+                                onRefresh = { onAction(MediaPickerAction.Refresh) },
+                            ) { successContent() }
+                        }
                     }
                 }
             }
         }
-    }
 
-    BackHandler(enabled = selectionManager.isInSelectionMode) {
-        selectionManager.exitSelectionMode()
-    }
+        BackHandler(enabled = selectionManager.isInSelectionMode) {
+            selectionManager.exitSelectionMode()
+        }
 
-    showRenameActionFor?.let { video ->
-        RenameDialog(
-            name = video.displayName,
-            onDismiss = { showRenameActionFor = null },
-            onDone = {
-                onAction(
-                    MediaPickerAction.RenameVideo(
-                        video.uriString.toUri(),
-                        to = it,
-                    ),
-                )
-                selectionManager.exitSelectionMode()
-                showRenameActionFor = null
-            },
-        )
-    }
+        showRenameActionFor?.let { video ->
+            RenameDialog(
+                name = video.displayName,
+                onDismiss = { showRenameActionFor = null },
+                onDone = {
+                    onAction(
+                        MediaPickerAction.RenameVideo(
+                            video.uriString.toUri(),
+                            to = it,
+                        ),
+                    )
+                    selectionManager.exitSelectionMode()
+                    showRenameActionFor = null
+                },
+            )
+        }
 
-    if (showQuickSettings) {
-        QuickSettingsDialog(
-            applicationPreferences = state.preferences,
-            onDismiss = { showQuickSettings = false },
-            updatePreferences = { preferences ->
-                onAction(MediaPickerAction.UpdateMenu(preferences = preferences))
-            },
-        )
-    }
+        if (showQuickSettings) {
+            QuickSettingsDialog(
+                applicationPreferences = state.preferences,
+                onDismiss = { showQuickSettings = false },
+                updatePreferences = { preferences ->
+                    onAction(MediaPickerAction.UpdateMenu(preferences = preferences))
+                },
+            )
+        }
 
-    showRatingActionFor?.let { video ->
-        RatingDialog(
-            video = video,
-            onDismiss = { showRatingActionFor = null },
-            onSave = { rating, comment ->
-                onAction(
-                    MediaPickerAction.RateVideo(
-                        uri = video.uriString,
-                        rating = rating,
-                        comment = comment,
-                    ),
-                )
-                showRatingActionFor = null
-            },
-        )
-    }
+        showRatingActionFor?.let { video ->
+            RatingDialog(
+                video = video,
+                onDismiss = { showRatingActionFor = null },
+                onSave = { rating, comment ->
+                    onAction(
+                        MediaPickerAction.RateVideo(
+                            uri = video.uriString,
+                            rating = rating,
+                            comment = comment,
+                        ),
+                    )
+                    showRatingActionFor = null
+                },
+            )
+        }
 
-    state.mediaInfo?.let { mediaInfo ->
-        MediaInfoDialog(
-            mediaInfo = mediaInfo,
-            onDismiss = { onAction(MediaPickerAction.DismissMediaInfo) },
-        )
-    }
+        state.mediaInfo?.let { mediaInfo ->
+            MediaInfoDialog(
+                mediaInfo = mediaInfo,
+                onDismiss = { onAction(MediaPickerAction.DismissMediaInfo) },
+            )
+        }
 
-    if (showDeleteVideosConfirmation) {
-        DeleteConfirmationDialog(
-            selectionItems = selectionManager.selectionItems,
-            onRemoveRecord = {
-                onAction(
-                    MediaPickerAction.RemoveSelectedItemsFromLibrary(
-                        selectionManager.selectionItems,
-                    ),
-                )
-                selectionManager.exitSelectionMode()
-                showDeleteVideosConfirmation = false
-            },
-            onDeletePermanently = {
-                onAction(
-                    MediaPickerAction.DeleteSelectedItems(selectionManager.selectionItems),
-                )
-                selectionManager.exitSelectionMode()
-                showDeleteVideosConfirmation = false
-            },
-            onCancel = { showDeleteVideosConfirmation = false },
-        )
-    }
+        if (showDeleteVideosConfirmation) {
+            DeleteConfirmationDialog(
+                selectionItems = selectionManager.selectionItems,
+                onRemoveRecord = {
+                    onAction(
+                        MediaPickerAction.RemoveSelectedItemsFromLibrary(
+                            selectionManager.selectionItems,
+                        ),
+                    )
+                    selectionManager.exitSelectionMode()
+                    showDeleteVideosConfirmation = false
+                },
+                onDeletePermanently = {
+                    onAction(
+                        MediaPickerAction.DeleteSelectedItems(selectionManager.selectionItems),
+                    )
+                    selectionManager.exitSelectionMode()
+                    showDeleteVideosConfirmation = false
+                },
+                onCancel = { showDeleteVideosConfirmation = false },
+            )
+        }
 
-    (state.transferFlow as? TransferFlowState.Processing)?.let { transfer ->
-        TransferProgressDialog(
-            mode = transfer.mode,
-            progress = transfer.progress,
-            onCancel = { onAction(MediaPickerAction.CancelTransfer) },
-        )
-    }
+        (state.transferFlow as? TransferFlowState.Processing)?.let { transfer ->
+            TransferProgressDialog(
+                mode = transfer.mode,
+                progress = transfer.progress,
+                onCancel = { onAction(MediaPickerAction.CancelTransfer) },
+            )
+        }
     }
 }
 

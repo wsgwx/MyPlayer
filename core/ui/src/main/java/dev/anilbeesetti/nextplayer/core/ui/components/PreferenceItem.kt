@@ -2,20 +2,22 @@ package dev.anilbeesetti.nextplayer.core.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -71,6 +73,7 @@ fun SelectablePreference(
     onLongClick: () -> Unit = {},
     isFirstItem: Boolean = false,
     isLastItem: Boolean = false,
+    onDelete: (() -> Unit)? = null,
 ) {
     NextSegmentedListItem(
         modifier = modifier,
@@ -82,13 +85,7 @@ fun SelectablePreference(
             Text(
                 text = title,
                 maxLines = 1,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    textDecoration = if (selected) {
-                        TextDecoration.LineThrough
-                    } else {
-                        TextDecoration.None
-                    },
-                ),
+                style = MaterialTheme.typography.titleMedium,
             )
         },
         supportingContent = {
@@ -96,22 +93,28 @@ fun SelectablePreference(
                 Text(
                     text = it,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        textDecoration = if (selected) {
-                            TextDecoration.LineThrough
-                        } else {
-                            TextDecoration.None
-                        },
-                    ),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         },
         trailingContent = {
-            Checkbox(
-                modifier = Modifier.semantics { contentDescription = title },
-                checked = selected,
-                onCheckedChange = null,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    modifier = Modifier.semantics { contentDescription = title },
+                    checked = selected,
+                    onCheckedChange = null,
+                )
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            imageVector = NextIcons.Delete,
+                            contentDescription = title,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
         },
     )
 }

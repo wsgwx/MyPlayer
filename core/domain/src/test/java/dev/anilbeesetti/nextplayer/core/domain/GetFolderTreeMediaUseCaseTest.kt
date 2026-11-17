@@ -7,6 +7,7 @@ import dev.anilbeesetti.nextplayer.core.model.Video
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -15,6 +16,15 @@ class GetFolderTreeMediaUseCaseTest {
 
     private val mediaRepository = FakeMediaRepository()
     private val preferencesRepository = FakePreferencesRepository()
+
+    init {
+        // New semantics: an empty scan-folder whitelist shows nothing.
+        runBlocking {
+            preferencesRepository.updateApplicationPreferences {
+                it.copy(scanFolders = listOf("/storage/emulated/0/Movies"))
+            }
+        }
+    }
 
     private val getFolderTreeMediaUseCase = GetFolderTreeMediaUseCase(
         mediaRepository = mediaRepository,
@@ -171,9 +181,10 @@ class GetFolderTreeMediaUseCaseTest {
     }
 
     @Test
-    fun folderNewVideosCount_excludesVideosFromExcludedFolders() = runTest {
+    fun folderTree_hidesFoldersOutsideScanWhitelist() = runTest {
         preferencesRepository.updateApplicationPreferences {
-            it.copy(scanFolders = listOf(element = folderPath))
+            // Whitelist only the Camera folder; the Movies folder must stay hidden.
+            it.copy(scanFolders = listOf(element = "/storage/emulated/0/DCIM/Camera"))
         }
         mediaRepository.videos.addAll(
             elements = listOf(

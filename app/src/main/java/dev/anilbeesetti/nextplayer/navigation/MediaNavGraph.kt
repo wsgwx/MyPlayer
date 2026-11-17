@@ -24,7 +24,6 @@ fun EntryProviderScope<NavKey>.mediaNavGraph(context: Context, backStack: NavBac
         onVaultClick = backStack::navigateToVault,
         onAppearanceClick = backStack::navigateToAppearancePreferences,
     )
-
 }
 
 internal fun Context.startPlayback(uri: Uri, grantReadPermission: Boolean = false) {

@@ -21,7 +21,12 @@ fun Modifier.horizontalSwipe(
 ): Modifier = if (!enabled || (onSwipeLeft == null && onSwipeRight == null)) {
     this
 } else {
-    this.pointerInput(enabled, thresholdFraction, onSwipeLeft, onSwipeRight) {
+    this.pointerInput(
+        enabled,
+        thresholdFraction,
+        onSwipeLeft,
+        onSwipeRight,
+    ) {
         awaitPointerEventScope {
             while (true) {
                 val down = awaitFirstDown(

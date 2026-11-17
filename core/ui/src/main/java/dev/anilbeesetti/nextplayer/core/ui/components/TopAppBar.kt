@@ -54,6 +54,7 @@ fun NextTopAppBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = fontWeight,
+                style = MaterialTheme.typography.titleMedium,
             )
         },
         navigationIcon = navigationIcon,

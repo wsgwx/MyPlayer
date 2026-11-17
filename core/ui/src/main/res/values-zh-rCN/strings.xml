@@ -134,7 +134,7 @@
     <string name="encrypt">加密</string>
     <string name="ff_rewind">快进/快退</string>
     <string name="scanning_storage">正在扫描存储空间…</string>
-    <string name="manage_folders_desc">只显示选中文件夹里的视频；全部不选则扫描所有文件夹</string>
+    <string name="manage_folders_desc">只显示选中文件夹里的视频；请至少选择一个，未选择时不显示任何视频</string>
     <string name="scan_add_folder">添加文件夹…</string>
     <string name="scan_add_folder_desc">可以选设备上的任意路径；即使目前还没有视频也会记住</string>
     <string name="removed_records">已移除的记录</string>
@@ -231,6 +231,7 @@
     <string name="rating_low_first">低分在前</string>
     <string name="rating_high_first">高分在前</string>
     <string name="save">保存</string>
+    <string name="scan_folders_empty_hint">还没有选择扫描文件夹。去 设置 → 媒体库 → 扫描文件夹，选择视频所在的位置。</string>
     <string name="okay">确定</string>
     <string name="audio_track">音频轨道</string>
     <string name="sample_rate">采样率</string>

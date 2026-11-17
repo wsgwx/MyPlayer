@@ -101,6 +101,7 @@ import dev.anilbeesetti.nextplayer.core.ui.components.thenIf
 import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusRing
 import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
 import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.MediaPickerRoute
+import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.VaultRoute
 
 /**
  * Top-level destinations shown in the bottom bar / nav rail. The first entry is the start (exit)
@@ -257,6 +258,26 @@ internal fun TopLevelNavState.navigationTransition(
     targetState: Scene<NavKey>,
     isPredictive: Boolean = false,
 ): ContentTransform {
+    // Library <-> privacy space swipes like a pager: both screens move together at full speed,
+    // no parallax, so the two screens read as one continuous sheet.
+    val vaultContentKey = NavEntry(key = VaultRoute) {}.contentKey
+    val initialIsVault = initialState.entries.lastOrNull()?.contentKey == vaultContentKey
+    val targetIsVault = targetState.entries.lastOrNull()?.contentKey == vaultContentKey
+    if (initialIsVault != targetIsVault) {
+        val pushing = targetIsVault
+        val spec = tween<IntOffset>(
+            durationMillis = 300,
+            easing = FastOutSlowInEasing,
+        )
+        return slideInHorizontally(
+            initialOffsetX = { if (pushing) it else -it },
+            animationSpec = spec,
+        ) togetherWith slideOutHorizontally(
+            targetOffsetX = { if (pushing) -it else it },
+            animationSpec = spec,
+        )
+    }
+
     if (isNavigationBetweenTopLevelDestinations(
             initialState = initialState,
             targetState = targetState,

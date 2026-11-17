@@ -21,10 +21,7 @@ class AppearancePreferencesViewModel(
     @InjectedParam internal var output: Output,
 ) : MviViewModel<AppearancePreferencesUiState, AppearancePreferencesEvent>() {
 
-    data class Output(
-        val navigateUp: () -> Unit,
-        val openBackground: () -> Unit,
-    )
+    data class Output(val navigateUp: () -> Unit, val openBackground: () -> Unit)
 
     private val stateInternal = MutableStateFlow(
         value = AppearancePreferencesUiState(

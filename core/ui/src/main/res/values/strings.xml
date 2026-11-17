@@ -143,7 +143,7 @@
     <string name="scanning_storage">Scanning storage…</string>
     <string name="manage_folders">Scan folders</string>
     <string name="encrypt">Encrypt</string>
-    <string name="manage_folders_desc">Only show videos from the selected folders. Leave empty to scan everything</string>
+    <string name="manage_folders_desc">Only show videos inside the selected folders. Pick at least one — nothing is shown until you do.</string>
     <string name="scan_add_folder">Add folder…</string>
     <string name="scan_add_folder_desc">Pick any folder on this device; it is scanned even when no video is there yet</string>
     <string name="removed_records">Removed records</string>
@@ -260,6 +260,7 @@
     <string name="rating_low_first">Low score first</string>
     <string name="rating_high_first">High score first</string>
     <string name="save">Save</string>
+    <string name="scan_folders_empty_hint">No scan folder selected. Go to Settings → Media library → Scan folders and pick where your videos live.</string>
     <string name="okay">Okay</string>
     <string name="properties">Properties</string>
     <string name="volume_boost">Volume boost</string>

@@ -19,7 +19,6 @@ class NextPlayerApplication :
 
     private val imageLoader: ImageLoader by inject()
 
-
     private val applicationScope: CoroutineScope by inject(
         qualifier = named(DiQualifiers.APPLICATION_SCOPE),
     )

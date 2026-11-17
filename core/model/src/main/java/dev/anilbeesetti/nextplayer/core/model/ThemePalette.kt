@@ -20,7 +20,6 @@ enum class ThemePalette {
     FOREST,
 }
 
-
 /** Tolerates palettes persisted by older builds. */
 object ThemePaletteSerializer : KSerializer<ThemePalette> {
     override val descriptor = PrimitiveSerialDescriptor(

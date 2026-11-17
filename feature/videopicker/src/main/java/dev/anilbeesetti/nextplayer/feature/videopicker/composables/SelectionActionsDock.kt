@@ -73,13 +73,18 @@ internal fun SelectionActionsDock(
 
     AnimatedVisibility(
         modifier = modifier.windowInsetsPadding(
-            WindowInsets.displayCutout.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal),
+            WindowInsets.displayCutout.only(
+                androidx.compose.foundation.layout.WindowInsetsSides.Horizontal,
+            ),
         ),
         visible = show,
         enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
         exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
     ) {
-        val shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        val shape = RoundedCornerShape(
+            topStart = 28.dp,
+            topEnd = 28.dp,
+        )
         val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         Row(
             modifier = Modifier
@@ -90,8 +95,14 @@ internal fun SelectionActionsDock(
                     drawContent()
                     drawLine(
                         color = dividerColor,
-                        start = Offset(x = 0f, y = 0f),
-                        end = Offset(x = size.width, y = 0f),
+                        start = Offset(
+                            x = 0f,
+                            y = 0f,
+                        ),
+                        end = Offset(
+                            x = size.width,
+                            y = 0f,
+                        ),
                         strokeWidth = 1.dp.toPx(),
                     )
                 }
@@ -101,7 +112,10 @@ internal fun SelectionActionsDock(
                         .focusProperties { up = contentFocusRequester }
                 }
                 .navigationBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 10.dp,
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
@@ -142,14 +156,20 @@ private fun DockActionItem(
                 shape = RoundedCornerShape(16.dp),
             )
             .clip(shape = RoundedCornerShape(16.dp))
-            .clickable(enabled = action.enabled, onClick = action.onClick)
+            .clickable(
+                enabled = action.enabled,
+                onClick = action.onClick,
+            )
             .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
                 .size(size = 40.dp)
-                .background(color = containerColor, shape = CircleShape),
+                .background(
+                    color = containerColor,
+                    shape = CircleShape,
+                ),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

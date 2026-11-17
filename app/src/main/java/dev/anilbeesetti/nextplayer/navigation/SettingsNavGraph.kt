@@ -10,15 +10,15 @@ import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.vaultEntry
 import dev.anilbeesetti.nextplayer.settings.Setting
 import dev.anilbeesetti.nextplayer.settings.navigation.aboutPreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.appearancePreferencesEntry
-import dev.anilbeesetti.nextplayer.settings.navigation.backgroundPreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.audioPreferencesEntry
+import dev.anilbeesetti.nextplayer.settings.navigation.backgroundPreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.folderPreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.gesturePreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.mediaLibraryPreferencesEntry
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToAboutPreferences
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToAppearancePreferences
-import dev.anilbeesetti.nextplayer.settings.navigation.navigateToBackgroundPreferences
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToAudioPreferences
+import dev.anilbeesetti.nextplayer.settings.navigation.navigateToBackgroundPreferences
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToFolderPreferencesScreen
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToGesturePreferences
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToMediaLibraryPreferencesScreen
@@ -104,5 +104,4 @@ fun EntryProviderScope<NavKey>.settingsNavGraph(
             )
         },
     )
-
 }

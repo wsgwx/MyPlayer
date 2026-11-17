@@ -428,43 +428,43 @@ class PlayerActivity : ComponentActivity() {
 
     private suspend fun playVideo(uri: Uri, @Suppress("UNUSED_PARAMETER") playlistId: Long?) =
         withContext(Dispatchers.Default) {
-        val request = playerApi
+            val request = playerApi
 
-        val mediaContentUri = if (request.isApiAccess) null else getMediaContentUri(uri)
-        val explicitPlaylist = request.getPlaylist()
-        val playlist = explicitPlaylist.takeIf { it.isNotEmpty() }
-            ?: listOf((mediaContentUri ?: uri).toString())
+            val mediaContentUri = if (request.isApiAccess) null else getMediaContentUri(uri)
+            val explicitPlaylist = request.getPlaylist()
+            val playlist = explicitPlaylist.takeIf { it.isNotEmpty() }
+                ?: listOf((mediaContentUri ?: uri).toString())
 
-        val mediaItemIndexToPlay = playlist.indexOfFirst {
-            it == (mediaContentUri ?: uri).toString()
-        }.takeIf { it >= 0 } ?: 0
+            val mediaItemIndexToPlay = playlist.indexOfFirst {
+                it == (mediaContentUri ?: uri).toString()
+            }.takeIf { it >= 0 } ?: 0
 
-        val apiSubs = request.getSubs().map { subtitle ->
-            uriToSubtitleConfiguration(
-                uri = subtitle.uri,
-                subtitleEncoding = playerPreferences.subtitleTextEncoding,
-                isSelected = subtitle.isSelected,
-                label = subtitle.name,
-                filename = subtitle.filename,
-                useMediaSourceForNetwork = true,
-            )
-        }
-        val mediaItems = request.createMediaItems(
-            playlist,
-            mediaItemIndexToPlay,
-            apiSubs,
-        )
-        ensureActive()
-
-        withContext(Dispatchers.Main) {
-            startQueue(
-                request,
-                mediaItems,
+            val apiSubs = request.getSubs().map { subtitle ->
+                uriToSubtitleConfiguration(
+                    uri = subtitle.uri,
+                    subtitleEncoding = playerPreferences.subtitleTextEncoding,
+                    isSelected = subtitle.isSelected,
+                    label = subtitle.name,
+                    filename = subtitle.filename,
+                    useMediaSourceForNetwork = true,
+                )
+            }
+            val mediaItems = request.createMediaItems(
+                playlist,
                 mediaItemIndexToPlay,
-                request.position?.toLong() ?: C.TIME_UNSET,
+                apiSubs,
             )
+            ensureActive()
+
+            withContext(Dispatchers.Main) {
+                startQueue(
+                    request,
+                    mediaItems,
+                    mediaItemIndexToPlay,
+                    request.position?.toLong() ?: C.TIME_UNSET,
+                )
+            }
         }
-    }
 
     private suspend fun startQueue(
         request: PlayerApi,

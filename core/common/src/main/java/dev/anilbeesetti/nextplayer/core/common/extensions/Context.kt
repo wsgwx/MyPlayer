@@ -62,12 +62,19 @@ fun Context.getPathFromTreeUri(uri: Uri): String? {
 
     val treeId = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()
         ?: return null
-    val parts = treeId.split(":", limit = 2)
+    val parts = treeId.split(
+        ":",
+        limit = 2,
+    )
     val volumeId = parts.firstOrNull().orEmpty()
     val relativePath = parts.getOrNull(index = 1).orEmpty().trim('/')
     if (volumeId.isEmpty()) return null
 
-    val root = if (volumeId.equals(other = "primary", ignoreCase = true)) {
+    val root = if (volumeId.equals(
+            other = "primary",
+            ignoreCase = true,
+        )
+    ) {
         Environment.getExternalStorageDirectory().path
     } else {
         "/storage/$volumeId"

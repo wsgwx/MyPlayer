@@ -92,7 +92,6 @@ class PlayerViewModel(
         }
     }
 
-
     private fun updateVideoZoom(uri: String, zoom: Float) {
         viewModelScope.launch {
             mediaRepository.updateMediumZoom(

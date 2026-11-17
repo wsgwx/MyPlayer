@@ -58,15 +58,9 @@ class RemovedVideosViewModel(
     }
 }
 
-data class RemovedVideoItem(
-    val uriString: String,
-    val name: String,
-    val path: String,
-)
+data class RemovedVideoItem(val uriString: String, val name: String, val path: String)
 
-data class RemovedVideosUiState(
-    val videos: List<RemovedVideoItem> = emptyList(),
-)
+data class RemovedVideosUiState(val videos: List<RemovedVideoItem> = emptyList())
 
 sealed interface RemovedVideosUiEvent {
     data object NavigateUp : RemovedVideosUiEvent

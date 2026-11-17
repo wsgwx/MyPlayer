@@ -167,10 +167,18 @@ fun MediaLayoutAndSortSettings(
                 val ascending = order == Sort.Order.ASCENDING
                 val label = when (sort.by) {
                     Sort.By.TITLE, Sort.By.PATH -> if (ascending) R.string.a_z else R.string.z_a
+
                     Sort.By.LENGTH -> if (ascending) R.string.shortest else R.string.longest
+
                     Sort.By.SIZE -> if (ascending) R.string.smallest else R.string.largest
+
                     Sort.By.DATE -> if (ascending) R.string.oldest else R.string.newest
-                    Sort.By.RATING -> if (ascending) R.string.rating_low_first else R.string.rating_high_first
+
+                    Sort.By.RATING -> if (ascending) {
+                        R.string.rating_low_first
+                    } else {
+                        R.string.rating_high_first
+                    }
                 }
                 Text(text = stringResource(id = label))
             }

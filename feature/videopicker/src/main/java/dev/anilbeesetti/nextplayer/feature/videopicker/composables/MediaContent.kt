@@ -43,7 +43,7 @@ fun CenterCircularProgressBar(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun NoVideosFound(contentPadding: PaddingValues) {
+fun NoVideosFound(contentPadding: PaddingValues, subtitle: String? = null) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,5 +75,13 @@ fun NoVideosFound(contentPadding: PaddingValues) {
             text = stringResource(id = R.string.no_videos_found),
             style = MaterialTheme.typography.titleLargeEmphasized,
         )
+        if (subtitle != null) {
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

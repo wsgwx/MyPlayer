@@ -41,10 +41,16 @@ class BackgroundPreferencesViewModel(
     override fun onAction(action: BackgroundPreferencesUiEvent) {
         when (action) {
             is BackgroundPreferencesUiEvent.NavigateUp -> output.navigateUp()
+
             is BackgroundPreferencesUiEvent.SelectType -> selectType(action.type)
+
             is BackgroundPreferencesUiEvent.PickImage -> pickImage()
+
             is BackgroundPreferencesUiEvent.ClearImage -> update {
-                it.copy(type = BackgroundType.DEFAULT, imageUri = null)
+                it.copy(
+                    type = BackgroundType.DEFAULT,
+                    imageUri = null,
+                )
             }
         }
     }
@@ -59,22 +65,25 @@ class BackgroundPreferencesViewModel(
     private fun pickImage() {
         viewModelScope.launch {
             val uri: Uri = systemService.pickImage() ?: return@launch
-            update { it.copy(type = BackgroundType.IMAGE, imageUri = uri.toString()) }
+            update {
+                it.copy(
+                    type = BackgroundType.IMAGE,
+                    imageUri = uri.toString(),
+                )
+            }
         }
     }
 
     private fun update(transform: (BackgroundConfig) -> BackgroundConfig) {
         viewModelScope.launch {
-            preferencesRepository.updateApplicationPreferences { preferences: ApplicationPreferences ->
+            preferencesRepository.updateApplicationPreferences { preferences ->
                 preferences.copy(background = transform(preferences.background))
             }
         }
     }
 }
 
-data class BackgroundPreferencesUiState(
-    val background: BackgroundConfig = BackgroundConfig(),
-)
+data class BackgroundPreferencesUiState(val background: BackgroundConfig = BackgroundConfig())
 
 sealed interface BackgroundPreferencesUiEvent {
     data object NavigateUp : BackgroundPreferencesUiEvent

@@ -2,8 +2,8 @@ package dev.anilbeesetti.nextplayer.core.data.repository
 
 import android.content.ContentValues
 import android.content.Context
-import android.net.Uri
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -11,8 +11,8 @@ import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import dev.anilbeesetti.nextplayer.core.common.Logger
-import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
 import dev.anilbeesetti.nextplayer.core.common.Utils
+import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
 import dev.anilbeesetti.nextplayer.core.data.mappers.toAudioStreamInfo
 import dev.anilbeesetti.nextplayer.core.data.mappers.toSubtitleStreamInfo
 import dev.anilbeesetti.nextplayer.core.data.mappers.toVideo
@@ -59,13 +59,21 @@ class LocalVaultRepository(
      */
     private val vaultDir: File by lazy {
         val external = Environment.getExternalStorageDirectory()
-        val preferred = File(external, VAULT_DIR_NAME)
-        val created = runCatching { preferred.mkdirs() || preferred.isDirectory }.getOrDefault(false)
+        val preferred = File(
+            external,
+            VAULT_DIR_NAME,
+        )
+        val created = runCatching {
+            preferred.mkdirs() || preferred.isDirectory
+        }.getOrDefault(false)
         if (created && preferred.canWrite()) {
             preferred
         } else {
             val base = context.getExternalFilesDir(null) ?: context.filesDir
-            File(base, VAULT_DIR_NAME).apply { if (!exists()) mkdirs() }
+            File(
+                base,
+                VAULT_DIR_NAME,
+            ).apply { if (!exists()) mkdirs() }
         }
     }
 

@@ -21,10 +21,10 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import dev.anilbeesetti.nextplayer.core.common.extensions.VIDEO_COLLECTION_URI
 import dev.anilbeesetti.nextplayer.core.common.extensions.deleteMedia
 import dev.anilbeesetti.nextplayer.core.common.extensions.getFilenameFromUri
 import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
-import dev.anilbeesetti.nextplayer.core.common.extensions.VIDEO_COLLECTION_URI
 import dev.anilbeesetti.nextplayer.core.common.extensions.scanPaths
 import dev.anilbeesetti.nextplayer.core.common.extensions.updateMedia
 import dev.anilbeesetti.nextplayer.core.common.service.SuspendActivityResultLauncher
@@ -70,19 +70,24 @@ class LocalMediaOperationsService(
         )
     }
 
-    override suspend fun removeFromLibrary(uris: List<Uri>): Boolean =
-        withContext(Dispatchers.IO) {
-            val entries = uris.mapNotNull { uri ->
-                val path = context.getPath(uri = uri) ?: return@mapNotNull null
-                RemovedVideoEntity(uriString = uri.toString(), path = path)
-            }
-            if (entries.isEmpty()) return@withContext false
-
-            removedVideoDao.insertAll(videos = entries)
-            // The library is a MediaStore query, so nudge its observer to re-read the ignore list.
-            contentResolver.notifyChange(VIDEO_COLLECTION_URI, null)
-            true
+    override suspend fun removeFromLibrary(uris: List<Uri>): Boolean = withContext(Dispatchers.IO) {
+        val entries = uris.mapNotNull { uri ->
+            val path = context.getPath(uri = uri) ?: return@mapNotNull null
+            RemovedVideoEntity(
+                uriString = uri.toString(),
+                path = path,
+            )
         }
+        if (entries.isEmpty()) return@withContext false
+
+        removedVideoDao.insertAll(videos = entries)
+        // The library is a MediaStore query, so nudge its observer to re-read the ignore list.
+        contentResolver.notifyChange(
+            VIDEO_COLLECTION_URI,
+            null,
+        )
+        true
+    }
 
     override suspend fun deleteMedia(uris: List<Uri>): Boolean = withContext(Dispatchers.IO) {
         val deleted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
