@@ -48,5 +48,6 @@ vendor/
 .junie
 docs/*
 !docs/agents/
+!docs/screenshots/
 .superpowers
 .koda
