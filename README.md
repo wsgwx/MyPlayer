@@ -8,7 +8,7 @@
 
 | 媒体库（列表） | 媒体库（网格） |
 |:---:|:---:|
-| ![home](docs/screenshots/home.png) | ![grid](docs/screenshots/grid.png) |
+| ![library](docs/screenshots/library.png) | ![grid](docs/screenshots/grid.png) |
 
 | 选中操作条 | 外观设置 |
 |:---:|:---:|
