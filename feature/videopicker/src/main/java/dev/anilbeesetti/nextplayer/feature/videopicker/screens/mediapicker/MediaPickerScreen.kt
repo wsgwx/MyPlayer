@@ -39,6 +39,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.ZeroCornerSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -86,6 +87,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -148,6 +150,12 @@ fun MediaPickerScreen(viewModel: MediaPickerViewModel) {
         minActiveState = Lifecycle.State.RESUMED,
     )
 
+    // Returning from the vault after first-time PIN setup resumes a pending hide.
+    LifecycleResumeEffect(Unit) {
+        viewModel.onAction(MediaPickerAction.ResumePendingHide)
+        onPauseOrDispose { }
+    }
+
     MediaPickerScreenContent(
         state = state,
         onAction = viewModel::onAction,
@@ -166,6 +174,10 @@ internal fun MediaPickerScreenContent(
 ) {
     val selectionManager = rememberSelectionManager()
     val context = LocalContext.current
+    // Clear the selection once a vault hide finishes (its marker increments).
+    LaunchedEffect(key1 = state.hideCompletedMarker) {
+        if (state.hideCompletedMarker > 0) selectionManager.clearSelection()
+    }
     val isTv = remember { context.isTelevision }
     val focusState = rememberRestorableFocusState()
     val hasMedia = (state.mediaDataState as? DataState.Success)?.value
@@ -606,6 +618,28 @@ internal fun MediaPickerScreenContent(
             MediaInfoDialog(
                 mediaInfo = mediaInfo,
                 onDismiss = { onAction(MediaPickerAction.DismissMediaInfo) },
+            )
+        }
+
+        if (state.showAllFilesAccessDialog) {
+            AlertDialog(
+                onDismissRequest = { onAction(MediaPickerAction.DismissAllFilesAccessDialog) },
+                title = { Text(text = stringResource(id = R.string.all_files_access_title)) },
+                text = { Text(text = stringResource(id = R.string.all_files_access_message)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onAction(MediaPickerAction.RequestAllFilesAccess) },
+                    ) {
+                        Text(text = stringResource(id = R.string.all_files_access_go))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { onAction(MediaPickerAction.DismissAllFilesAccessDialog) },
+                    ) {
+                        Text(text = stringResource(id = android.R.string.cancel))
+                    }
+                },
             )
         }
 

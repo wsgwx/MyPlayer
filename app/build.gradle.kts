@@ -85,21 +85,6 @@ android {
         }
     }
 
-    // Rename APK outputs to MyPlayer-<abi>-v<version>-<buildType>.apk after each assemble.
-    tasks.matching { task -> task.name.startsWith("assemble") }.configureEach {
-        val variantDir = name.removePrefix("assemble").decapitalize()
-        doLast {
-            val outDir = layout.buildDirectory.dir("outputs/apk/$variantDir").get().asFile
-            val pattern = Regex("app-(.+)-(debug|release)[.]apk")
-            outDir.listFiles()?.filter { pattern.matches(it.name) }?.forEach { apk ->
-                val m = pattern.matchEntire(apk.name)!!
-                apk.renameTo(
-                    File(outDir, "MyPlayer-${m.groupValues[1]}-v${android.defaultConfig.versionName}-${m.groupValues[2]}.apk"),
-                )
-            }
-        }
-    }
-
     packaging {
         resources {
             excludes.add("/META-INF/{AL2.0,LGPL2.1}")

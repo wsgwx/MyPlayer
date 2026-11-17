@@ -1,8 +1,12 @@
 package dev.anilbeesetti.nextplayer.feature.videopicker.screens.mediapicker
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.runtime.Stable
 import androidx.core.content.ContextCompat
@@ -65,6 +69,9 @@ class MediaPickerViewModel(
     @InjectedParam private val input: Input,
     @InjectedParam internal var output: Output,
 ) : MviViewModel<MediaPickerUiState, MediaPickerAction>() {
+
+    /** Videos the user picked for hiding before being sent off to set a vault PIN. */
+    private var pendingHideVideos: List<Video>? = null
 
     data class Input(val folderId: String?)
 
@@ -153,6 +160,14 @@ class MediaPickerViewModel(
                 it.copy(mediaInfo = null)
             }
 
+            is MediaPickerAction.RequestAllFilesAccess -> requestAllFilesAccess()
+
+            is MediaPickerAction.ResumePendingHide -> resumePendingHide()
+
+            is MediaPickerAction.DismissAllFilesAccessDialog -> stateInternal.update {
+                it.copy(showAllFilesAccessDialog = false)
+            }
+
             is MediaPickerAction.CopySelectedItems -> transferSelectedItems(
                 action.selectionItems,
                 TransferMode.COPY,
@@ -217,10 +232,51 @@ class MediaPickerViewModel(
             val videos = selectedItems.toVideos()
             if (videos.isEmpty()) return@launch
             if (!vaultPinRepository.hasPinSet()) {
+                pendingHideVideos = videos
                 output.openVault()
                 return@launch
             }
-            vaultRepository.hideVideos(videos = videos)
+            // Without all-files access the vault move degrades to a streamed copy and
+            // MediaStore pops a per-batch "allow modifying" confirmation. Guide the user
+            // to grant it once: afterwards hiding is an instant rename with no dialog.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                !Environment.isExternalStorageManager()
+            ) {
+                stateInternal.update { it.copy(showAllFilesAccessDialog = true) }
+                return@launch
+            }
+            hideVideos(videos = videos)
+        }
+    }
+
+    /** Resumes hiding videos remembered before first-time PIN setup in the vault. */
+    private fun resumePendingHide() {
+        val videos = pendingHideVideos ?: return
+        viewModelScope.launch {
+            if (!vaultPinRepository.hasPinSet()) return@launch
+            pendingHideVideos = null
+            hideVideos(videos = videos)
+        }
+    }
+
+    private suspend fun hideVideos(videos: List<Video>) {
+        vaultRepository.hideVideos(videos = videos)
+        stateInternal.update { it.copy(hideCompletedMarker = it.hideCompletedMarker + 1) }
+    }
+
+    private fun requestAllFilesAccess() {
+        stateInternal.update { it.copy(showAllFilesAccessDialog = false) }
+        val intent = Intent(
+            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+            Uri.parse("package:${context.packageName}"),
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching {
+            context.startActivity(intent)
+        }.recoverCatching {
+            context.startActivity(
+                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         }
     }
 
@@ -418,6 +474,9 @@ data class MediaPickerUiState(
     val preferences: ApplicationPreferences = ApplicationPreferences(),
     val mediaInfo: dev.anilbeesetti.nextplayer.core.model.MediaInfo? = null,
     val transferFlow: TransferFlowState = TransferFlowState.Idle,
+    val showAllFilesAccessDialog: Boolean = false,
+    /** Increments each time a vault hide finishes so the UI can clear the selection. */
+    val hideCompletedMarker: Int = 0,
 ) {
     val recentlyPlayedFolder: Folder?
         get() = recentlyPlayedVideo?.let { video ->
@@ -456,4 +515,7 @@ sealed interface MediaPickerAction {
     data class RateVideo(val uri: String, val rating: Float?, val comment: String) :
         MediaPickerAction
     data object DismissMediaInfo : MediaPickerAction
+    data object RequestAllFilesAccess : MediaPickerAction
+    data object DismissAllFilesAccessDialog : MediaPickerAction
+    data object ResumePendingHide : MediaPickerAction
 }

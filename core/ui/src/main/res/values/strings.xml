@@ -254,6 +254,9 @@
     <string name="my_rating">My rating</string>
     <string name="rating_unrated">Unrated</string>
     <string name="rate">Rate</string>
+    <string name="all_files_access_title">Grant all-files access?</string>
+    <string name="all_files_access_message">With all-files access, hiding a video is an instant rename with no system confirmation. Without it, each hide copies the whole file and Android shows an "allow modifying" dialog every time.</string>
+    <string name="all_files_access_go">Go to settings</string>
     <string name="rating_score">Score</string>
     <string name="rating_comment">Comment</string>
     <string name="rating_comment_hint">What stands out about this film?</string>

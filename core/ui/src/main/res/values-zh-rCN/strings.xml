@@ -225,6 +225,9 @@
     <string name="my_rating">我的评分</string>
     <string name="rating_unrated">未评分</string>
     <string name="rate">评分</string>
+    <string name="all_files_access_title">开启"所有文件访问"？</string>
+    <string name="all_files_access_message">开启后，移入隐私空间只是瞬间改个文件名，不会再弹系统确认框。不开启的话，每次加密都要复制整个文件，大视频会很慢，而且每次都会弹出"是否允许修改"的确认。</string>
+    <string name="all_files_access_go">去设置</string>
     <string name="rating_score">分数</string>
     <string name="rating_comment">评论</string>
     <string name="rating_comment_hint">写写这部片子的看点…</string>
