@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
 import dev.anilbeesetti.nextplayer.core.model.ThemeConfig
+import dev.anilbeesetti.nextplayer.core.model.ThemePalette
 import dev.anilbeesetti.nextplayer.core.ui.base.MviViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,10 @@ class AppearancePreferencesViewModel(
     @InjectedParam internal var output: Output,
 ) : MviViewModel<AppearancePreferencesUiState, AppearancePreferencesEvent>() {
 
-    data class Output(val navigateUp: () -> Unit)
+    data class Output(
+        val navigateUp: () -> Unit,
+        val openBackground: () -> Unit,
+    )
 
     private val stateInternal = MutableStateFlow(
         value = AppearancePreferencesUiState(
@@ -39,6 +43,12 @@ class AppearancePreferencesViewModel(
 
     override fun onAction(action: AppearancePreferencesEvent) {
         when (action) {
+            is AppearancePreferencesEvent.OpenBackground -> output.openBackground()
+
+            is AppearancePreferencesEvent.UpdateThemePalette -> updateThemePalette(
+                action.palette,
+            )
+
             is AppearancePreferencesEvent.NavigateUp -> output.navigateUp()
 
             is AppearancePreferencesEvent.ShowDialog -> showDialog(action.value)
@@ -88,6 +98,12 @@ class AppearancePreferencesViewModel(
         }
     }
 
+    private fun updateThemePalette(palette: ThemePalette) {
+        viewModelScope.launch {
+            preferencesRepository.updateApplicationPreferences { it.copy(themePalette = palette) }
+        }
+    }
+
     private fun toggleUseHighContrastDarkTheme() {
         viewModelScope.launch {
             preferencesRepository.updateApplicationPreferences {
@@ -111,6 +127,8 @@ sealed interface AppearancePreferencesEvent {
     data class UpdateThemeConfig(val themeConfig: ThemeConfig) : AppearancePreferencesEvent
     data object ToggleUseDynamicColors : AppearancePreferencesEvent
     data object ToggleUseHighContrastDarkTheme : AppearancePreferencesEvent
+    data object OpenBackground : AppearancePreferencesEvent
+    data class UpdateThemePalette(val palette: ThemePalette) : AppearancePreferencesEvent
 }
 
 sealed interface AppearancePreferenceDialog {

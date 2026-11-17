@@ -8,6 +8,8 @@ import dev.anilbeesetti.nextplayer.settings.screens.medialibrary.FolderPreferenc
 import dev.anilbeesetti.nextplayer.settings.screens.medialibrary.FolderPreferencesViewModel
 import dev.anilbeesetti.nextplayer.settings.screens.medialibrary.MediaLibraryPreferencesScreen
 import dev.anilbeesetti.nextplayer.settings.screens.medialibrary.MediaLibraryPreferencesViewModel
+import dev.anilbeesetti.nextplayer.settings.screens.removed.RemovedVideosScreen
+import dev.anilbeesetti.nextplayer.settings.screens.removed.RemovedVideosViewModel
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -18,6 +20,9 @@ object MediaLibraryPreferencesRoute : NavKey
 @Serializable
 object FolderPreferencesRoute : NavKey
 
+@Serializable
+object RemovedRecordsRoute : NavKey
+
 fun NavBackStack<NavKey>.navigateToMediaLibraryPreferencesScreen() {
     add(element = MediaLibraryPreferencesRoute)
 }
@@ -26,16 +31,22 @@ fun NavBackStack<NavKey>.navigateToFolderPreferencesScreen() {
     add(element = FolderPreferencesRoute)
 }
 
+fun NavBackStack<NavKey>.navigateToRemovedRecordsScreen() {
+    add(element = RemovedRecordsRoute)
+}
+
 fun EntryProviderScope<NavKey>.mediaLibraryPreferencesEntry(
     onNavigateUp: () -> Unit,
     onFolderSettingClick: () -> Unit,
     onThumbnailSettingClick: () -> Unit,
+    onRemovedRecordsClick: () -> Unit,
 ) {
     entry<MediaLibraryPreferencesRoute> {
         val output = MediaLibraryPreferencesViewModel.Output(
             navigateUp = onNavigateUp,
             openFolders = onFolderSettingClick,
             openThumbnails = onThumbnailSettingClick,
+            openRemovedRecords = onRemovedRecordsClick,
         )
         val viewModel = koinViewModel<MediaLibraryPreferencesViewModel>(
             parameters = { parametersOf(output) },
@@ -53,5 +64,16 @@ fun EntryProviderScope<NavKey>.folderPreferencesEntry(onNavigateUp: () -> Unit) 
         )
         SideEffect { viewModel.output = output }
         FolderPreferencesScreen(viewModel = viewModel)
+    }
+}
+
+fun EntryProviderScope<NavKey>.removedRecordsEntry(onNavigateUp: () -> Unit) {
+    entry<RemovedRecordsRoute> {
+        val output = RemovedVideosViewModel.Output(navigateUp = onNavigateUp)
+        val viewModel = koinViewModel<RemovedVideosViewModel>(
+            parameters = { parametersOf(output) },
+        )
+        SideEffect { viewModel.output = output }
+        RemovedVideosScreen(viewModel = viewModel)
     }
 }

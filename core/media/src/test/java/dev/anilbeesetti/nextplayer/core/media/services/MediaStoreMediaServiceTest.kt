@@ -41,6 +41,7 @@ class MediaStoreMediaServiceTest {
     private val service = MediaStoreMediaService(
         context = context,
         applicationScope = scope,
+        removedVideoDao = FakeRemovedVideoDao(),
     )
 
     @Before
@@ -84,7 +85,6 @@ class MediaStoreMediaServiceTest {
             val flows = listOf<Flow<List<*>>>(
                 service.observeVideos(),
                 service.observeFolders(),
-                service.observeTrashVideos(),
             )
             for ((index, flow) in flows.withIndex()) {
                 val volume = if (index == 1) "1234-5678" else "external_primary"

@@ -23,6 +23,8 @@ data class Video(
     val videoStream: VideoStreamInfo? = null,
     val audioStreams: List<AudioStreamInfo> = emptyList(),
     val subtitleStreams: List<SubtitleStreamInfo> = emptyList(),
+    val userRating: Float? = null,
+    val userComment: String = "",
 ) : Serializable {
 
     val displayName: String = nameWithExtension.substringBeforeLast(delimiter = ".")

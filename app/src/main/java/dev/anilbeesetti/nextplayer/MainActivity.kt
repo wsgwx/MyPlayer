@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -70,18 +71,17 @@ import dev.anilbeesetti.nextplayer.core.ui.components.LocalTopLevelBottomBarVisi
 import dev.anilbeesetti.nextplayer.core.ui.components.LocalTopLevelFabSetter
 import dev.anilbeesetti.nextplayer.core.ui.components.TopLevelFabState
 import dev.anilbeesetti.nextplayer.core.ui.components.thenIf
+import dev.anilbeesetti.nextplayer.core.model.BackgroundConfig
+import dev.anilbeesetti.nextplayer.core.model.BackgroundType
+import dev.anilbeesetti.nextplayer.core.model.ThemePalette
+import dev.anilbeesetti.nextplayer.core.ui.components.AppBackground
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
-import dev.anilbeesetti.nextplayer.navigation.NextNavigationBar
 import dev.anilbeesetti.nextplayer.navigation.NextNavigationRail
 import dev.anilbeesetti.nextplayer.navigation.TopLevelDestination
 import dev.anilbeesetti.nextplayer.navigation.TopLevelNavState
 import dev.anilbeesetti.nextplayer.navigation.mediaNavGraph
-import dev.anilbeesetti.nextplayer.navigation.moreNavGraph
 import dev.anilbeesetti.nextplayer.navigation.navigationTransition
 import dev.anilbeesetti.nextplayer.navigation.navigationTransitionModifier
-import dev.anilbeesetti.nextplayer.navigation.networkNavGraph
-import dev.anilbeesetti.nextplayer.navigation.openPlaylist
-import dev.anilbeesetti.nextplayer.navigation.playlistNavGraph
 import dev.anilbeesetti.nextplayer.navigation.rememberTopLevelNavState
 import dev.anilbeesetti.nextplayer.navigation.settingsNavGraph
 import org.koin.android.ext.android.inject
@@ -95,21 +95,16 @@ class MainActivity : FragmentActivity() {
 
     private val viewModel: MainViewModel by viewModel()
 
-    private var pendingPlaylistId by mutableStateOf<Long?>(value = null)
     private var darkSystemBars = false
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingPlaylistId = PlaylistShortcut.playlistId(intent = intent)
     }
 
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            pendingPlaylistId = PlaylistShortcut.playlistId(intent = intent)
-        }
         systemService.initialize(activity = this@MainActivity)
         mediaOperationsService.initialize(activity = this@MainActivity)
 
@@ -135,63 +130,58 @@ class MainActivity : FragmentActivity() {
         setContent {
             val state by viewModel.state.collectAsStateWithLifecycle()
             val shouldUseDarkTheme = shouldUseDarkTheme(state = state)
+            // A dark custom background needs light system-bar icons even in light theme.
+            val customBackground = (state as? MainActivityUiState.Success)?.preferences?.background
+            val darkBackground = customBackground?.let { background ->
+                when (background.type) {
+                    BackgroundType.IMAGE -> shouldUseDarkTheme
+                    BackgroundType.DEFAULT -> false
+                }
+            } ?: false
+            val useDarkSystemBars = shouldUseDarkTheme || darkBackground
 
-            LaunchedEffect(key1 = shouldUseDarkTheme) {
-                darkSystemBars = shouldUseDarkTheme
+            LaunchedEffect(key1 = useDarkSystemBars) {
+                darkSystemBars = useDarkSystemBars
                 WindowCompat.getInsetsController(
                     window,
                     window.decorView,
                 ).apply {
-                    isAppearanceLightStatusBars = !shouldUseDarkTheme
-                    isAppearanceLightNavigationBars = !shouldUseDarkTheme
+                    isAppearanceLightStatusBars = !useDarkSystemBars
+                    isAppearanceLightNavigationBars = !useDarkSystemBars
                 }
             }
 
+            val preferences = (state as? MainActivityUiState.Success)?.preferences
             NextPlayerTheme(
                 darkTheme = shouldUseDarkTheme,
                 highContrastDarkTheme = shouldUseHighContrastDarkTheme(state = state),
-                dynamicColor = shouldUseDynamicTheming(state = state),
+                palette = preferences?.themePalette ?: ThemePalette.CINEMA,
+                background = preferences?.background ?: BackgroundConfig(),
             ) {
+                // The background lives at the root so it also shows through the settings screens,
+                // sheets and dialogs instead of being covered by an opaque surface.
+                AppBackground(
+                    background = preferences?.background ?: BackgroundConfig(),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = androidx.compose.ui.graphics.Color.Transparent,
                 ) {
                     val navState = rememberTopLevelNavState()
 
-                    LaunchedEffect(key1 = pendingPlaylistId) {
-                        pendingPlaylistId?.let { playlistId ->
-                            navState.openPlaylist(playlistId = playlistId)
-                            pendingPlaylistId = null
-                        }
-                    }
 
                     val mediaStack = navState.backStacks.getValue(TopLevelDestination.MEDIA.route)
-                    val playlistStack = navState.backStacks.getValue(
-                        TopLevelDestination.PLAYLISTS.route,
-                    )
-                    val networkStack = navState.backStacks.getValue(
-                        TopLevelDestination.NETWORK.route,
-                    )
-                    val moreStack = navState.backStacks.getValue(TopLevelDestination.MORE.route)
 
                     val provider = entryProvider {
                         mediaNavGraph(
                             context = this@MainActivity,
                             backStack = mediaStack,
                         )
-                        playlistNavGraph(
+                        settingsNavGraph(
                             context = this@MainActivity,
-                            backStack = playlistStack,
+                            backStack = navState.currentStack,
                         )
-                        networkNavGraph(
-                            context = this@MainActivity,
-                            backStack = networkStack,
-                        )
-                        moreNavGraph(
-                            context = this@MainActivity,
-                            backStack = moreStack,
-                        )
-                        settingsNavGraph(backStack = navState.currentStack)
                     }
 
                     val topLevelFabStates =
@@ -267,6 +257,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
+                }
             }
         }
     }
@@ -301,21 +292,6 @@ fun NavigationLayout(
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = modifier,
-            bottomBar = {
-                AnimatedVisibility(
-                    visible = showNavigation && showBottomBar,
-                    enter = fadeIn() + slideInVertically { it },
-                    exit = fadeOut() + slideOutVertically { it },
-                ) {
-                    NextNavigationBar(
-                        state = state,
-                        fabState = displayedFabState,
-                        contentFocusRequester = contentFocusRequester,
-                        fabFocusRequester = fabFocusRequester,
-                        showFabOnly = showNavRail,
-                    )
-                }
-            },
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentWindowInsets = WindowInsets(0.dp),
             content = {

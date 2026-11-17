@@ -1,6 +1,8 @@
 package dev.anilbeesetti.nextplayer.feature.videopicker.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -231,30 +234,40 @@ private fun FolderGridItem(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    NextSegmentedListItem(
-        modifier = modifier.width(IntrinsicSize.Min),
-        selected = selected,
-        contentPadding = PaddingValues(8.dp),
-        colors = ListItemDefaults.segmentedColors(
-            contentColor = if (isRecentlyPlayedFolder && preferences.markLastPlayedMedia) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                ListItemDefaults.segmentedColors().contentColor
-            },
-            supportingContentColor = if (isRecentlyPlayedFolder &&
-                preferences.markLastPlayedMedia
-            ) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                ListItemDefaults.colors().supportingContentColor
-            },
-            selectedContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
-        ),
-        isFirstItem = isFirstItem,
-        isLastItem = isLastItem,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        content = {
+    val isHighlighted = isRecentlyPlayedFolder && preferences.markLastPlayedMedia
+    val shape = RoundedCornerShape(16.dp)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape = shape)
+            .background(
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
+                shape = shape,
+            )
+            .then(
+                if (selected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = shape,
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(all = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
             Column(
                 modifier = modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -311,7 +324,7 @@ private fun FolderGridItem(
                         color = if (isRecentlyPlayedFolder && preferences.markLastPlayedMedia) {
                             MaterialTheme.colorScheme.primary
                         } else {
-                            ListItemDefaults.colors().contentColor
+                            MaterialTheme.colorScheme.onSurface
                         },
                         textAlign = TextAlign.Center,
                     )
@@ -356,8 +369,7 @@ private fun FolderGridItem(
                     )
                 }
             }
-        },
-    )
+        }
 }
 
 /** Rounded badge showing the full number of new videos inside a folder. */

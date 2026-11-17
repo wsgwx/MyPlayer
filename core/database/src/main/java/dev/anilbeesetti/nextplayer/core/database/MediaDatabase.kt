@@ -6,23 +6,18 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import dev.anilbeesetti.nextplayer.core.database.dao.HiddenVideoDao
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
-import dev.anilbeesetti.nextplayer.core.database.dao.NetworkConnectionDao
-import dev.anilbeesetti.nextplayer.core.database.dao.PlaylistDao
+import dev.anilbeesetti.nextplayer.core.database.dao.RemovedVideoDao
 import dev.anilbeesetti.nextplayer.core.database.entities.HiddenVideoEntity
 import dev.anilbeesetti.nextplayer.core.database.entities.MediumStateEntity
-import dev.anilbeesetti.nextplayer.core.database.entities.NetworkConnectionEntity
-import dev.anilbeesetti.nextplayer.core.database.entities.PlaylistEntity
-import dev.anilbeesetti.nextplayer.core.database.entities.PlaylistItemEntity
+import dev.anilbeesetti.nextplayer.core.database.entities.RemovedVideoEntity
 
 @Database(
     entities = [
         MediumStateEntity::class,
         HiddenVideoEntity::class,
-        NetworkConnectionEntity::class,
-        PlaylistEntity::class,
-        PlaylistItemEntity::class,
+        RemovedVideoEntity::class,
     ],
-    version = 13,
+    version = 18,
     exportSchema = true,
 )
 abstract class MediaDatabase : RoomDatabase() {
@@ -31,9 +26,7 @@ abstract class MediaDatabase : RoomDatabase() {
 
     abstract fun hiddenVideoDao(): HiddenVideoDao
 
-    abstract fun networkConnectionDao(): NetworkConnectionDao
-
-    abstract fun playlistDao(): PlaylistDao
+    abstract fun removedVideoDao(): RemovedVideoDao
 
     companion object {
         const val DATABASE_NAME = "media_db"
@@ -242,74 +235,6 @@ abstract class MediaDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_6_7 = object : Migration(
-            6,
-            7,
-        ) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                // Column definitions (order, types, nullability) must match the schema Room
-                // generates from NetworkConnectionEntity exactly, or migration validation fails.
-                db.execSQL(
-                    sql = """
-                    CREATE TABLE IF NOT EXISTS `network_connection` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `name` TEXT NOT NULL,
-                        `protocol` TEXT NOT NULL,
-                        `host` TEXT NOT NULL,
-                        `port` INTEGER,
-                        `path` TEXT NOT NULL,
-                        `username` TEXT NOT NULL,
-                        `password` TEXT NOT NULL,
-                        `use_https` INTEGER NOT NULL,
-                        `created_at` INTEGER NOT NULL
-                    )
-                    """,
-                )
-            }
-        }
-
-        val MIGRATION_7_8 = object : Migration(
-            7,
-            8,
-        ) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    sql = """
-                    CREATE TABLE IF NOT EXISTS `playlist` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `name` TEXT NOT NULL,
-                        `created_at` INTEGER NOT NULL
-                    )
-                    """,
-                )
-                db.execSQL(
-                    sql = """
-                    CREATE TABLE IF NOT EXISTS `playlist_item` (
-                        `playlist_id` INTEGER NOT NULL,
-                        `uri` TEXT NOT NULL,
-                        `position` INTEGER NOT NULL,
-                        `last_played_at` INTEGER,
-                        PRIMARY KEY(`playlist_id`, `uri`),
-                        FOREIGN KEY(`playlist_id`) REFERENCES `playlist`(`id`)
-                            ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """,
-                )
-                db.execSQL(
-                    sql = """
-                    CREATE INDEX IF NOT EXISTS `index_playlist_item_playlist_id`
-                    ON `playlist_item` (`playlist_id`)
-                    """,
-                )
-                db.execSQL(
-                    sql = """
-                    CREATE UNIQUE INDEX IF NOT EXISTS `index_playlist_item_playlist_id_position`
-                    ON `playlist_item` (`playlist_id`, `position`)
-                    """,
-                )
-            }
-        }
-
         val MIGRATION_8_9 = object : Migration(
             8,
             9,
@@ -418,6 +343,65 @@ abstract class MediaDatabase : RoomDatabase() {
                 db.execSQL(
                     sql = "CREATE UNIQUE INDEX `index_media_state_uri` ON `media_state` (`uri`)",
                 )
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(
+            13,
+            14,
+        ) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(sql = "DROP TABLE IF EXISTS `network_connection`")
+            }
+        }
+
+        val MIGRATION_17_18 = object : Migration(
+            17,
+            18,
+        ) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    sql = "ALTER TABLE `media_state` ADD COLUMN `user_comment` TEXT NOT NULL DEFAULT ''",
+                )
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(
+            16,
+            17,
+        ) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    sql = "ALTER TABLE `media_state` ADD COLUMN `user_rating` REAL",
+                )
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(
+            15,
+            16,
+        ) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    sql = """
+                    CREATE TABLE IF NOT EXISTS `removed_video` (
+                        `uri` TEXT NOT NULL,
+                        `path` TEXT NOT NULL,
+                        `removed_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`uri`)
+                    )
+                    """,
+                )
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(
+            14,
+            15,
+        ) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(sql = "DROP TABLE IF EXISTS `playlist_item`")
+                db.execSQL(sql = "DROP TABLE IF EXISTS `playlist`")
             }
         }
     }

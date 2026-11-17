@@ -16,7 +16,6 @@ import dev.anilbeesetti.nextplayer.core.database.converter.UriListConverter
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
 import dev.anilbeesetti.nextplayer.core.database.entities.MediumStateEntity
 import dev.anilbeesetti.nextplayer.core.datastore.datasource.AppPreferencesDataSource
-import dev.anilbeesetti.nextplayer.core.media.network.NetworkUri
 import dev.anilbeesetti.nextplayer.core.media.services.MediaService
 import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.model.MediaInfo
@@ -70,26 +69,6 @@ class LocalMediaRepository(
             mediaVideo.toVideo(mediaState = mediaState)
         }
 
-    override fun observePlaybackHistory(): Flow<List<Video>> = combine(
-        mediaService.observeVideos(),
-        mediumStateDao.getAll(),
-    ) {
-            mediaVideos,
-            mediumStates,
-        ->
-        val videosByUri = mediaVideos.associateBy { it.uri.toString() }
-        mediumStates
-            .filter { it.lastPlayedTime != null && !it.uriString.toUri().isVaultUri() }
-            .sortedByDescending { it.lastPlayedTime }
-            .map { state ->
-                videosByUri[state.uriString]?.toVideo(mediaState = state)
-                    ?: state.toHistoryVideo()
-            }
-    }
-
-    override fun observeTrashVideos(): Flow<List<Video>> =
-        mediaService.observeTrashVideos().map { videos -> videos.map { it.toVideo() } }
-
     override suspend fun getVideoByUri(uri: String): Video? = coroutineScope {
         val mediaVideoDeferred = async { mediaService.findVideo(uri.toUri()) }
         val mediaStateDeferred = async { mediumStateDao.get(uri = uri) }
@@ -131,18 +110,11 @@ class LocalMediaRepository(
         lastPlayedTime: Long,
         duration: Long?,
     ) {
-        val preferences = appPreferencesDataSource.preferences.first()
-        val mediaUri = uri.toUri()
-        val recordHistory = !preferences.isHistoryPaused &&
-            !mediaUri.isVaultUri() &&
-            (
-                preferences.includeNetworkWatchHistory ||
-                    !NetworkUri.isNetworkUri(uri = mediaUri) ||
-                    NetworkUri.connectionIdOf(uri = mediaUri) == null
-                )
+        // Vault playback must never surface as "last played" in the library.
+        val recordLastPlayed = !uri.toUri().isVaultUri()
         mediumStateDao.update(uri = uri) { state ->
             state.copy(
-                lastPlayedTime = if (recordHistory) lastPlayedTime else state.lastPlayedTime,
+                lastPlayedTime = if (recordLastPlayed) lastPlayedTime else state.lastPlayedTime,
                 duration = duration ?: state.duration,
             )
         }
@@ -162,6 +134,15 @@ class LocalMediaRepository(
 
     override suspend fun updateMediumZoom(uri: String, zoom: Float) {
         mediumStateDao.update(uri = uri) { it.copy(videoScale = zoom) }
+    }
+
+    override suspend fun updateMediumUserReview(uri: String, rating: Float?, comment: String?) {
+        mediumStateDao.update(uri = uri) { state ->
+            state.copy(
+                userRating = rating,
+                userComment = comment ?: state.userComment,
+            )
+        }
     }
 
     override suspend fun addExternalAudioToMedium(uri: String, audioUri: Uri) {

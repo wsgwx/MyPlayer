@@ -1,6 +1,8 @@
 package dev.anilbeesetti.nextplayer.feature.videopicker.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +15,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
@@ -200,6 +205,9 @@ fun VideoListItem(
     )
 }
 
+/**
+ * Infuse-style poster card: rounded artwork with the title underneath, no list chrome.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun VideoGridItem(
@@ -207,62 +215,69 @@ fun VideoGridItem(
     video: Video,
     isRecentlyPlayedVideo: Boolean,
     preferences: ApplicationPreferences,
-    textStyle: TextStyle = MaterialTheme.typography.titleMedium,
-    isFirstItem: Boolean = false,
-    isLastItem: Boolean = false,
+    textStyle: TextStyle = MaterialTheme.typography.titleSmall,
+    @Suppress("UNUSED_PARAMETER") isFirstItem: Boolean = false,
+    @Suppress("UNUSED_PARAMETER") isLastItem: Boolean = false,
     selected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
 ) {
-    NextSegmentedListItem(
-        modifier = modifier.width(IntrinsicSize.Min),
-        selected = selected,
-        contentPadding = PaddingValues(8.dp),
-        colors = ListItemDefaults.segmentedColors(
-            contentColor = if (isRecentlyPlayedVideo && preferences.markLastPlayedMedia) {
+    val isHighlighted = isRecentlyPlayedVideo && preferences.markLastPlayedMedia
+    val shape = RoundedCornerShape(16.dp)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape = shape)
+            .background(
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
+                shape = shape,
+            )
+            .then(
+                if (selected) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = shape,
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(all = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 6.dp),
+    ) {
+        ThumbnailView(
+            modifier = Modifier.fillMaxWidth(),
+            video = video,
+            preferences = preferences,
+        )
+        Text(
+            text = if (preferences.showExtensionField) {
+                video.nameWithExtension
+            } else {
+                video.displayName
+            },
+            maxLines = 2,
+            style = textStyle,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start,
+            color = if (isHighlighted) {
                 MaterialTheme.colorScheme.primary
             } else {
-                ListItemDefaults.segmentedColors().contentColor
+                MaterialTheme.colorScheme.onSurface
             },
-            supportingContentColor = if (isRecentlyPlayedVideo && preferences.markLastPlayedMedia) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                ListItemDefaults.colors().supportingContentColor
-            },
-            selectedContainerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f),
-        ),
-        isFirstItem = isFirstItem,
-        isLastItem = isLastItem,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        content = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                ThumbnailView(
-                    video = video,
-                    preferences = preferences,
-                )
-                Text(
-                    text = if (preferences.showExtensionField) {
-                        video.nameWithExtension
-                    } else {
-                        video.displayName
-                    },
-                    maxLines = 2,
-                    style = textStyle.copy(lineBreak = LineBreak.Heading),
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    color = if (isRecentlyPlayedVideo && preferences.markLastPlayedMedia) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        ListItemDefaults.colors().contentColor
-                    },
-                )
-            }
-        },
-    )
+            modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp),
+        )
+    }
 }
 
 /** True if the video is local. Remote videos avoid full download and use a placeholder. */
@@ -299,7 +314,7 @@ private fun ThumbnailView(
     }
     Box(
         modifier = modifier
-            .clip(MaterialTheme.shapes.small)
+            .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
             .aspectRatio(ratio = 16f / 10f),
     ) {
@@ -346,6 +361,15 @@ private fun ThumbnailView(
                 backgroundColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = MaterialTheme.shapes.extraSmall,
+            )
+        }
+
+        video.userRating?.let { rating ->
+            RatingBadge(
+                rating = rating,
+                modifier = Modifier
+                    .padding(all = 5.dp)
+                    .align(alignment = Alignment.TopEnd),
             )
         }
 
@@ -411,4 +435,22 @@ fun VideoGridItemPreview() {
             isRecentlyPlayedVideo = true,
         )
     }
+}
+
+/** Small score badge pinned to the thumbnail's top-right corner. */
+@Composable
+fun RatingBadge(rating: Float, modifier: Modifier = Modifier) {
+    Text(
+        text = if (rating % 1f == 0f) {
+            rating.toInt().toString()
+        } else {
+            String.format(java.util.Locale.US, "%.1f", rating)
+        },
+        style = MaterialTheme.typography.labelMedium,
+        color = Color(0xFFFFB74D),
+        modifier = modifier
+            .clip(shape = CircleShape)
+            .background(color = Color.Black.copy(alpha = 0.65f))
+            .padding(horizontal = 7.dp, vertical = 2.dp),
+    )
 }

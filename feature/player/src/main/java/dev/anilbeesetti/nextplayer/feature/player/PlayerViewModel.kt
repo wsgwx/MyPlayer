@@ -5,7 +5,6 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.viewModelScope
 import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
-import dev.anilbeesetti.nextplayer.core.domain.GetSortedPlaylistUseCase
 import dev.anilbeesetti.nextplayer.core.model.LoopMode
 import dev.anilbeesetti.nextplayer.core.model.PlayerPreferences
 import dev.anilbeesetti.nextplayer.core.model.Video
@@ -27,7 +26,6 @@ import org.koin.core.annotation.KoinViewModel
 class PlayerViewModel(
     private val mediaRepository: MediaRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val getSortedPlaylistUseCase: GetSortedPlaylistUseCase,
     @InjectedParam internal var output: Output,
 ) : MviViewModel<PlayerUiState, PlayerAction>() {
 
@@ -94,7 +92,6 @@ class PlayerViewModel(
         }
     }
 
-    suspend fun getPlaylistFromUri(uri: Uri): List<Video> = getSortedPlaylistUseCase.invoke(uri)
 
     private fun updateVideoZoom(uri: String, zoom: Float) {
         viewModelScope.launch {

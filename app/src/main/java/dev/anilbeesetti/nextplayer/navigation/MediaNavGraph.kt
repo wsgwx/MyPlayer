@@ -10,9 +10,8 @@ import dev.anilbeesetti.nextplayer.feature.player.PlayerActivity
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.mediaPickerEntry
 import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.navigateToMediaPickerScreen
-import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.navigateToSearch
 import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.navigateToVault
-import dev.anilbeesetti.nextplayer.feature.videopicker.navigation.searchEntry
+import dev.anilbeesetti.nextplayer.settings.navigation.navigateToAppearancePreferences
 import dev.anilbeesetti.nextplayer.settings.navigation.navigateToSettings
 
 fun EntryProviderScope<NavKey>.mediaNavGraph(context: Context, backStack: NavBackStack<NavKey>) {
@@ -22,15 +21,10 @@ fun EntryProviderScope<NavKey>.mediaNavGraph(context: Context, backStack: NavBac
         onPlayVideos = { uris -> context.startPlayback(uris = uris) },
         onFolderClick = backStack::navigateToMediaPickerScreen,
         onSettingsClick = backStack::navigateToSettings,
-        onSearchClick = backStack::navigateToSearch,
         onVaultClick = backStack::navigateToVault,
+        onAppearanceClick = backStack::navigateToAppearancePreferences,
     )
 
-    searchEntry(
-        onNavigateUp = { backStack.removeLastIfNotRoot() },
-        onPlayVideo = { uri -> context.startPlayback(uri = uri) },
-        onFolderClick = backStack::navigateToMediaPickerScreen,
-    )
 }
 
 internal fun Context.startPlayback(uri: Uri, grantReadPermission: Boolean = false) {

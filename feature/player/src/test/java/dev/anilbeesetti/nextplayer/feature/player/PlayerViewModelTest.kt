@@ -3,7 +3,6 @@ package dev.anilbeesetti.nextplayer.feature.player
 import androidx.lifecycle.viewModelScope
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakeMediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakePreferencesRepository
-import dev.anilbeesetti.nextplayer.core.domain.GetSortedPlaylistUseCase
 import dev.anilbeesetti.nextplayer.core.domain.GetSortedVideosUseCase
 import dev.anilbeesetti.nextplayer.feature.player.model.DecoderServiceState
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderMode
@@ -39,16 +38,6 @@ class PlayerViewModelTest {
         viewModel = PlayerViewModel(
             mediaRepository = mediaRepository,
             preferencesRepository = preferences,
-            getSortedPlaylistUseCase = GetSortedPlaylistUseCase(
-                getSortedVideosUseCase = GetSortedVideosUseCase(
-                    mediaRepository = mediaRepository,
-                    preferencesRepository = preferences,
-                    defaultDispatcher = dispatcher,
-                ),
-                preferencesRepository = preferences,
-                context = RuntimeEnvironment.getApplication(),
-                defaultDispatcher = dispatcher,
-            ),
             output = PlayerViewModel.Output(
                 navigateUp = {},
                 selectSubtitle = {},

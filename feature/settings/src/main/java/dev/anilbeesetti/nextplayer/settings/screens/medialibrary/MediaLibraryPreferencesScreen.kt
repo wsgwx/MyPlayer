@@ -31,7 +31,6 @@ import dev.anilbeesetti.nextplayer.core.ui.components.ListSectionTitle
 import dev.anilbeesetti.nextplayer.core.ui.components.NextTopAppBar
 import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceSlider
 import dev.anilbeesetti.nextplayer.core.ui.components.PreferenceSwitch
-import dev.anilbeesetti.nextplayer.core.ui.components.WatchHistoryConfirmationDialog
 import dev.anilbeesetti.nextplayer.core.ui.components.rememberRestorableFocusState
 import dev.anilbeesetti.nextplayer.core.ui.components.restorableFocusGroup
 import dev.anilbeesetti.nextplayer.core.ui.components.restorableFocusItem
@@ -60,7 +59,6 @@ private fun MediaLibraryPreferencesScreenContent(
     onAction: (MediaLibraryPreferencesUiEvent) -> Unit,
 ) {
     val preferences = state.preferences
-    var enableHistoryConfirmation by rememberSaveable { mutableStateOf<Boolean?>(value = null) }
 
     val focusState = rememberRestorableFocusState()
 
@@ -156,39 +154,16 @@ private fun MediaLibraryPreferencesScreenContent(
                     icon = NextIcons.FolderOff,
                     onClick = { onAction(MediaLibraryPreferencesUiEvent.OpenFolders) },
                     isFirstItem = true,
-                    isLastItem = true,
                 )
-            }
-
-            ListSectionTitle(text = stringResource(id = R.string.history))
-            Column(
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
-            ) {
-                PreferenceSwitch(
+                ClickablePreferenceItem(
                     modifier = Modifier.restorableFocusItem(
                         state = focusState,
-                        key = "watch_history",
+                        key = "removed_records",
                     ),
-                    title = stringResource(id = R.string.watch_history),
-                    description = stringResource(id = R.string.watch_history_desc),
-                    icon = NextIcons.History,
-                    isChecked = !preferences.isHistoryPaused,
-                    onClick = { enableHistoryConfirmation = preferences.isHistoryPaused },
-                    isFirstItem = true,
-                )
-                PreferenceSwitch(
-                    modifier = Modifier.restorableFocusItem(
-                        state = focusState,
-                        key = "network_watch_history",
-                    ),
-                    title = stringResource(id = R.string.network_watch_history),
-                    description = stringResource(id = R.string.network_watch_history_desc),
-                    icon = NextIcons.Network,
-                    enabled = !preferences.isHistoryPaused,
-                    isChecked = preferences.includeNetworkWatchHistory,
-                    onClick = {
-                        onAction(MediaLibraryPreferencesUiEvent.ToggleIncludeNetworkWatchHistory)
-                    },
+                    title = stringResource(id = R.string.removed_records),
+                    description = stringResource(id = R.string.removed_records_desc),
+                    icon = NextIcons.Delete,
+                    onClick = { onAction(MediaLibraryPreferencesUiEvent.OpenRemovedRecords) },
                     isLastItem = true,
                 )
             }
@@ -223,18 +198,6 @@ private fun MediaLibraryPreferencesScreenContent(
         }
     }
 
-    enableHistoryConfirmation?.let { enableHistory ->
-        WatchHistoryConfirmationDialog(
-            enableHistory = enableHistory,
-            onConfirm = {
-                onAction(
-                    MediaLibraryPreferencesUiEvent.SetWatchHistoryEnabled(enabled = enableHistory),
-                )
-                enableHistoryConfirmation = null
-            },
-            onDismiss = { enableHistoryConfirmation = null },
-        )
-    }
 }
 
 @PreviewLightDark

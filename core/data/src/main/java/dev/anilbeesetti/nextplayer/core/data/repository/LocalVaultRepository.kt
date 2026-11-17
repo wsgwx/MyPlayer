@@ -3,6 +3,7 @@ package dev.anilbeesetti.nextplayer.core.data.repository
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -10,14 +11,17 @@ import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import dev.anilbeesetti.nextplayer.core.common.Logger
+import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
 import dev.anilbeesetti.nextplayer.core.common.Utils
 import dev.anilbeesetti.nextplayer.core.data.mappers.toAudioStreamInfo
 import dev.anilbeesetti.nextplayer.core.data.mappers.toSubtitleStreamInfo
+import dev.anilbeesetti.nextplayer.core.data.mappers.toVideo
 import dev.anilbeesetti.nextplayer.core.data.mappers.toVideoStreamInfo
 import dev.anilbeesetti.nextplayer.core.database.dao.HiddenVideoDao
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
 import dev.anilbeesetti.nextplayer.core.database.entities.HiddenVideoEntity
 import dev.anilbeesetti.nextplayer.core.media.services.MediaOperationsService
+import dev.anilbeesetti.nextplayer.core.media.services.MediaService
 import dev.anilbeesetti.nextplayer.core.model.MediaInfo
 import dev.anilbeesetti.nextplayer.core.model.Video
 import io.github.anilbeesetti.nextlib.mediainfo.MediaInfoBuilder
@@ -41,18 +45,28 @@ class LocalVaultRepository(
     private val hiddenVideoDao: HiddenVideoDao,
     private val mediumStateDao: MediumStateDao,
     private val mediaOperationsService: MediaOperationsService,
+    private val preferencesRepository: PreferencesRepository,
+    private val mediaService: MediaService,
     private val context: Context,
 ) : VaultRepository {
 
     private val vaultMutationMutex = Mutex()
     private val pendingVaultPaths = MutableStateFlow<Set<String>>(value = emptySet())
 
+    /**
+     * Hidden folder on shared storage. A dot-prefixed directory is skipped by MediaProvider, so
+     * system galleries and other players never index it, and files survive an app uninstall.
+     */
     private val vaultDir: File by lazy {
-        val base = context.getExternalFilesDir(null) ?: context.filesDir
-        File(
-            base,
-            VAULT_DIR_NAME,
-        ).apply { if (!exists()) mkdirs() }
+        val external = Environment.getExternalStorageDirectory()
+        val preferred = File(external, VAULT_DIR_NAME)
+        val created = runCatching { preferred.mkdirs() || preferred.isDirectory }.getOrDefault(false)
+        if (created && preferred.canWrite()) {
+            preferred
+        } else {
+            val base = context.getExternalFilesDir(null) ?: context.filesDir
+            File(base, VAULT_DIR_NAME).apply { if (!exists()) mkdirs() }
+        }
     }
 
     override fun observeHiddenVideos(): Flow<List<Video>> = combine(
@@ -73,14 +87,7 @@ class LocalVaultRepository(
 
         try {
             val moveResult = try {
-                Result.success(
-                    mediaOperationsService.moveMedia(
-                        reservations.associate {
-                            it.sourceUri to
-                                it.destination
-                        },
-                    ),
-                )
+                Result.success(moveIntoVault(reservations = reservations))
             } catch (e: Exception) {
                 Result.failure(exception = e)
             }
@@ -92,6 +99,39 @@ class LocalVaultRepository(
         } finally {
             revealReservations(reservations.map { it.destination.absolutePath })
         }
+    }
+
+    /**
+     * Moves reserved videos into the vault.
+     *
+     * Within one filesystem a rename is O(1) regardless of file size, which is what makes hiding a
+     * multi-gigabyte video instant. Anything the rename can't handle (a different volume such as a
+     * removable SD card, or a file the app may not rename) falls back to the streaming copy.
+     */
+    private suspend fun moveIntoVault(reservations: List<HideReservation>): Map<Uri, File?> {
+        val moved = linkedMapOf<Uri, File?>()
+        val fallback = mutableListOf<HideReservation>()
+        withContext(Dispatchers.IO) {
+            reservations.forEach { reservation ->
+                val source = context.getPath(uri = reservation.sourceUri)?.let(::File)
+                val renamed = source != null &&
+                    runCatching {
+                        reservation.destination.parentFile?.mkdirs()
+                        source.renameTo(reservation.destination)
+                    }.getOrDefault(false)
+                if (renamed) {
+                    moved[reservation.sourceUri] = reservation.destination
+                } else {
+                    fallback += reservation
+                }
+            }
+        }
+        if (fallback.isNotEmpty()) {
+            moved += mediaOperationsService.moveMedia(
+                targets = fallback.associate { it.sourceUri to it.destination },
+            )
+        }
+        return moved
     }
 
     private suspend fun reserveVideos(videos: List<Video>): List<HideReservation> {
@@ -222,6 +262,24 @@ class LocalVaultRepository(
     private fun restoreToMediaStore(entity: HiddenVideoEntity): Boolean? {
         val vaultFile = File(entity.vaultPath)
         if (!vaultFile.exists()) return null
+
+        // Fast path: rename straight back to the original location, then let the scanner index it.
+        val originalFile = File(entity.originalPath)
+        val renamedBack = runCatching {
+            originalFile.parentFile?.mkdirs()
+            originalFile.parentFile?.canWrite() == true && vaultFile.renameTo(originalFile)
+        }.getOrDefault(false)
+        if (renamedBack) {
+            runCatching {
+                MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(entity.originalPath),
+                    null,
+                    null,
+                )
+            }
+            return false
+        }
 
         val resolver = context.contentResolver
         val inserted = insertPendingItem(entity = entity) ?: return null
@@ -414,7 +472,7 @@ class LocalVaultRepository(
 
     companion object {
         private const val TAG = "LocalVaultRepository"
-        private const val VAULT_DIR_NAME = "vault"
+        private const val VAULT_DIR_NAME = ".MyPlayerEnc"
 
         /** Fallback folder for videos whose original location MediaStore won't accept. */
         private val DEFAULT_RESTORE_DIR = Environment.DIRECTORY_MOVIES + "/"

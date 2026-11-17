@@ -26,6 +26,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.anilbeesetti.nextplayer.core.ui.R
 import dev.anilbeesetti.nextplayer.core.ui.base.DataState
+import dev.anilbeesetti.nextplayer.core.ui.components.ClickablePreferenceItem
 import dev.anilbeesetti.nextplayer.core.ui.components.NextTopAppBar
 import dev.anilbeesetti.nextplayer.core.ui.components.SelectablePreference
 import dev.anilbeesetti.nextplayer.core.ui.components.rememberTvListFocusRequester
@@ -86,6 +87,7 @@ private fun FolderPreferencesScreenContent(
             }
 
             is DataState.Success -> {
+                val folders = state.foldersDataState.value
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -93,16 +95,26 @@ private fun FolderPreferencesScreenContent(
                     contentPadding = innerPadding + PaddingValues(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
                 ) {
-                    itemsIndexed(state.foldersDataState.value) { index, folder ->
+                    item {
+                        ClickablePreferenceItem(
+                            title = stringResource(id = R.string.scan_add_folder),
+                            description = stringResource(id = R.string.scan_add_folder_desc),
+                            icon = NextIcons.Add,
+                            onClick = { onAction(FolderPreferencesUiEvent.AddFolder) },
+                            isFirstItem = true,
+                            isLastItem = folders.isEmpty(),
+                        )
+                    }
+                    itemsIndexed(folders) { index, folder ->
                         SelectablePreference(
                             title = folder.name,
                             description = folder.path,
-                            selected = folder.path in state.preferences.excludeFolders,
+                            selected = folder.path in state.preferences.scanFolders,
                             onClick = {
                                 onAction(FolderPreferencesUiEvent.UpdateExcludeList(folder.path))
                             },
-                            isFirstItem = index == 0,
-                            isLastItem = index == state.foldersDataState.value.lastIndex,
+                            isFirstItem = false,
+                            isLastItem = index == folders.lastIndex,
                         )
                     }
                 }

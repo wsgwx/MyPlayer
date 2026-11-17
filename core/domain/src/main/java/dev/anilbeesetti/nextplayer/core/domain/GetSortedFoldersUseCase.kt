@@ -7,6 +7,7 @@ import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.model.Sort
 import dev.anilbeesetti.nextplayer.core.model.isNew
+import dev.anilbeesetti.nextplayer.core.model.isRelevantFolder
 import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +47,7 @@ class GetSortedFoldersUseCase(
                     },
                 )
             }
-            .filterNot { it.path in preferences.excludeFolders }
+            .filter { preferences.isRelevantFolder(path = it.path) }
 
         val sort = Sort(
             by = preferences.sortBy,

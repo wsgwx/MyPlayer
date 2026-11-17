@@ -24,6 +24,7 @@ import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSourceBitmapLoader
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -48,8 +49,6 @@ import dev.anilbeesetti.nextplayer.core.common.extensions.getLocalSubtitles
 import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
 import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
-import dev.anilbeesetti.nextplayer.core.media.network.NetworkUri
-import dev.anilbeesetti.nextplayer.core.media.network.datasource.NextDataSourceFactory
 import dev.anilbeesetti.nextplayer.core.model.LoopMode
 import dev.anilbeesetti.nextplayer.core.model.PlayerPreferences
 import dev.anilbeesetti.nextplayer.core.model.Resume
@@ -76,7 +75,6 @@ import dev.anilbeesetti.nextplayer.feature.player.extensions.videoZoom
 import dev.anilbeesetti.nextplayer.feature.player.extensions.withExternalAudio
 import dev.anilbeesetti.nextplayer.feature.player.model.DecoderTrackType
 import dev.anilbeesetti.nextplayer.feature.player.utils.hasApiPosition
-import dev.anilbeesetti.nextplayer.feature.player.utils.isExplicitPlaylistItem
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderManager
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderMode
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
@@ -86,7 +84,6 @@ import io.github.anilbeesetti.nextlib.mediainfo.MediaInfoBuilder
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -113,7 +110,7 @@ class PlayerService : MediaSessionService() {
 
     private val preferencesRepository: PreferencesRepository by inject()
 
-    private val dataSourceFactory: NextDataSourceFactory by inject()
+    private val dataSourceFactory: DefaultDataSource.Factory by inject()
 
     private val mediaRepository: MediaRepository by inject()
 
@@ -212,9 +209,7 @@ class PlayerService : MediaSessionService() {
     private val playbackStateListener = object : Player.Listener {
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             val player = mediaSession?.player as? ExoPlayer ?: return
-            // Autoplay controls the implicit folder queue; explicitly chosen playlists play in full.
-            player.pauseAtEndOfMediaItems = !playerPreferences.autoplay &&
-                player.currentMediaItem?.isExplicitPlaylistItem != true
+            player.pauseAtEndOfMediaItems = !playerPreferences.autoplay
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -1063,8 +1058,6 @@ class PlayerService : MediaSessionService() {
             release()
             mediaSession = null
         }
-        // Queue release before a new service can open another connection.
-        applicationScope.launch(start = CoroutineStart.UNDISPATCHED) { dataSourceFactory.release() }
         serviceScope.cancel()
     }
 
@@ -1367,7 +1360,7 @@ class PlayerService : MediaSessionService() {
 
     private fun MediaItem.isNetworkMediaItem(): Boolean {
         val uri = localConfiguration?.uri ?: return false
-        return uri.scheme?.lowercase() in REMOTE_SCHEMES || NetworkUri.isNetworkUri(uri = uri)
+        return uri.scheme?.lowercase() in REMOTE_SCHEMES
     }
 
     private fun MediaItem.withArtwork(uri: Uri): MediaItem = buildUpon()

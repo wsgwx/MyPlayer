@@ -173,7 +173,7 @@ class GetFolderTreeMediaUseCaseTest {
     @Test
     fun folderNewVideosCount_excludesVideosFromExcludedFolders() = runTest {
         preferencesRepository.updateApplicationPreferences {
-            it.copy(excludeFolders = listOf(element = folderPath))
+            it.copy(scanFolders = listOf(element = folderPath))
         }
         mediaRepository.videos.addAll(
             elements = listOf(

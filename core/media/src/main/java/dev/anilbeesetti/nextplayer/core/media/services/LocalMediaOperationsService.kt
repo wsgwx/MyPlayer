@@ -24,10 +24,13 @@ import androidx.annotation.RequiresApi
 import dev.anilbeesetti.nextplayer.core.common.extensions.deleteMedia
 import dev.anilbeesetti.nextplayer.core.common.extensions.getFilenameFromUri
 import dev.anilbeesetti.nextplayer.core.common.extensions.getPath
+import dev.anilbeesetti.nextplayer.core.common.extensions.VIDEO_COLLECTION_URI
 import dev.anilbeesetti.nextplayer.core.common.extensions.scanPaths
 import dev.anilbeesetti.nextplayer.core.common.extensions.updateMedia
 import dev.anilbeesetti.nextplayer.core.common.service.SuspendActivityResultLauncher
 import dev.anilbeesetti.nextplayer.core.common.service.registerForSuspendActivityResult
+import dev.anilbeesetti.nextplayer.core.database.dao.RemovedVideoDao
+import dev.anilbeesetti.nextplayer.core.database.entities.RemovedVideoEntity
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -46,7 +49,10 @@ import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 
 @Single
-class LocalMediaOperationsService(private val context: Context) : MediaOperationsService {
+class LocalMediaOperationsService(
+    private val context: Context,
+    private val removedVideoDao: RemovedVideoDao,
+) : MediaOperationsService {
 
     private lateinit var activity: Activity
     private val contentResolver = context.contentResolver
@@ -64,21 +70,30 @@ class LocalMediaOperationsService(private val context: Context) : MediaOperation
         )
     }
 
-    override suspend fun deleteMedia(uris: List<Uri>, permanently: Boolean): Boolean =
+    override suspend fun removeFromLibrary(uris: List<Uri>): Boolean =
         withContext(Dispatchers.IO) {
-            return@withContext if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (permanently) deleteMediaR(uris = uris) else trashMediaR(uris = uris)
-            } else {
-                deleteMediaBelowR(uris = uris)
+            val entries = uris.mapNotNull { uri ->
+                val path = context.getPath(uri = uri) ?: return@mapNotNull null
+                RemovedVideoEntity(uriString = uri.toString(), path = path)
             }
+            if (entries.isEmpty()) return@withContext false
+
+            removedVideoDao.insertAll(videos = entries)
+            // The library is a MediaStore query, so nudge its observer to re-read the ignore list.
+            contentResolver.notifyChange(VIDEO_COLLECTION_URI, null)
+            true
         }
 
-    override suspend fun restoreMedia(uris: List<Uri>): Boolean = withContext(Dispatchers.IO) {
-        return@withContext Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            trashMediaR(
-                uris = uris,
-                trashed = false,
-            )
+    override suspend fun deleteMedia(uris: List<Uri>): Boolean = withContext(Dispatchers.IO) {
+        val deleted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            deleteMediaR(uris = uris)
+        } else {
+            deleteMediaBelowR(uris = uris)
+        }
+        if (deleted) {
+            removedVideoDao.deleteByUris(uris = uris.map { it.toString() })
+        }
+        deleted
     }
 
     override suspend fun renameMedia(uri: Uri, to: String): Boolean = withContext(Dispatchers.IO) {
@@ -664,29 +679,6 @@ class LocalMediaOperationsService(private val context: Context) : MediaOperation
         itemExists = ::mediaExists,
         request = ::requestDeleteR,
     )
-
-    @RequiresApi(Build.VERSION_CODES.R)
-    private suspend fun trashMediaR(uris: List<Uri>, trashed: Boolean = true): Boolean =
-        runMediaRequests(
-            items = uris,
-            itemExists = ::mediaExists,
-            request = {
-                requestTrashR(
-                    uris = it,
-                    trashed = trashed,
-                )
-            },
-        )
-
-    @RequiresApi(Build.VERSION_CODES.R)
-    private suspend fun requestTrashR(uris: List<Uri>, trashed: Boolean): Boolean =
-        requestMediaAccess(
-            pendingIntent = MediaStore.createTrashRequest(
-                contentResolver,
-                uris,
-                trashed,
-            ),
-        )
 
     @RequiresApi(Build.VERSION_CODES.R)
     private suspend fun requestDeleteR(uris: List<Uri>): Boolean = requestMediaAccess(

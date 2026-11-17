@@ -65,7 +65,6 @@ class LocalMediaRepositoryTest {
                 flowOf(value = emptyList<MediaFolder>())
             override fun observeVideos(folderPath: String?) =
                 flowOf(value = emptyList<MediaVideo>())
-            override fun observeTrashVideos() = observeVideos(folderPath = null)
             override suspend fun fetchFolders(folderPath: String?) = emptyList<MediaFolder>()
             override suspend fun fetchVideos(folderPath: String?) = emptyList<MediaVideo>()
             override suspend fun findVideo(uri: Uri) = null
@@ -77,7 +76,6 @@ class LocalMediaRepositoryTest {
             appPreferencesDataSource = preferences,
             RuntimeEnvironment.getApplication(),
         )
-        val networkUri = "smb://example.com/films/movie.mkv?cid=1"
         val adHocUri = "smb://example.com/share/movie.mkv"
         val vaultUri =
             "content://${RuntimeEnvironment.getApplication().packageName}" +
@@ -88,11 +86,6 @@ class LocalMediaRepositoryTest {
                 lastPlayedTime = 90,
             ),
         )
-        assertEquals(
-            listOf(element = "content://watched"),
-            repository.observePlaybackHistory().first().map { it.uriString },
-        )
-
         repository.updateMediumLastPlayedTime(
             uri = "content://watched",
             lastPlayedTime = 200,
@@ -121,41 +114,6 @@ class LocalMediaRepositoryTest {
             dao.get(uri = "content://new")?.playbackPosition,
         )
 
-        preferences.update { it.copy(isHistoryPaused = false) }
-        repository.updateMediumLastPlayedTime(
-            uri = "content://new",
-            lastPlayedTime = 300,
-            duration = null,
-        )
-        assertEquals(
-            300L,
-            dao.get(uri = "content://new")?.lastPlayedTime,
-        )
-        assertEquals(
-            1_000L,
-            dao.get(uri = "content://new")?.duration,
-        )
-        preferences.update { it.copy(includeNetworkWatchHistory = false) }
-        repository.updateMediumLastPlayedTime(
-            uri = networkUri,
-            lastPlayedTime = 500,
-            duration = 2_000,
-        )
-        assertNull(dao.get(uri = networkUri)?.lastPlayedTime)
-        assertEquals(
-            2_000L,
-            dao.get(uri = networkUri)?.duration,
-        )
-        repository.updateMediumLastPlayedTime(
-            uri = vaultUri,
-            lastPlayedTime = 500,
-            duration = 2_000,
-        )
-        repository.updateMediumLastPlayedTime(
-            uri = adHocUri,
-            lastPlayedTime = 500,
-            duration = null,
-        )
         assertEquals(
             500L,
             dao.get(uri = adHocUri)?.lastPlayedTime,
@@ -164,30 +122,8 @@ class LocalMediaRepositoryTest {
             90L,
             dao.get(uri = vaultUri)?.lastPlayedTime,
         )
-        preferences.update { it.copy(includeNetworkWatchHistory = true) }
-        repository.updateMediumLastPlayedTime(
-            uri = networkUri,
-            lastPlayedTime = 600,
-            duration = null,
-        )
-        assertEquals(
-            600L,
-            dao.get(uri = networkUri)?.lastPlayedTime,
-        )
-
-        preferences.update { it.copy(isHistoryPaused = true) }
         repository.clearPlaybackHistory()
-        repository.updateMediumLastPlayedTime(
-            uri = "content://new",
-            lastPlayedTime = 400,
-            duration = null,
-        )
-        assertNull(dao.get(uri = "content://new")?.lastPlayedTime)
         assertNull(dao.get(uri = "content://watched")?.lastPlayedTime)
-        assertEquals(
-            400L,
-            dao.get(uri = "content://new")?.playbackPosition,
-        )
     }
 
     @Test

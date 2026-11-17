@@ -24,8 +24,8 @@ fun EntryProviderScope<NavKey>.mediaPickerEntry(
     onPlayVideos: (uris: List<Uri>) -> Unit,
     onFolderClick: (folderPath: String) -> Unit,
     onSettingsClick: () -> Unit,
-    onSearchClick: () -> Unit,
     onVaultClick: () -> Unit,
+    onAppearanceClick: () -> Unit,
 ) {
     entry<MediaPickerRoute> { key ->
         val output = MediaPickerViewModel.Output(
@@ -34,8 +34,8 @@ fun EntryProviderScope<NavKey>.mediaPickerEntry(
             playVideos = onPlayVideos,
             openFolder = onFolderClick,
             openSettings = onSettingsClick,
-            openSearch = onSearchClick,
             openVault = onVaultClick,
+            openAppearance = onAppearanceClick,
         )
         val viewModel = koinViewModel<MediaPickerViewModel>(
             parameters = {

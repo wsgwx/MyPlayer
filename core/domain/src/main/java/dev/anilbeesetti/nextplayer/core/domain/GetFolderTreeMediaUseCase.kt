@@ -8,6 +8,7 @@ import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.model.Sort
 import dev.anilbeesetti.nextplayer.core.model.Video
 import dev.anilbeesetti.nextplayer.core.model.isNew
+import dev.anilbeesetti.nextplayer.core.model.isUnderScanFolder
 import java.io.File
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +37,7 @@ class GetFolderTreeMediaUseCase(
         preferencesRepository.applicationPreferences,
         flow3 = newVideoClock(),
     ) { videos, preferences, nowMillis ->
-        val included = videos.filterNot { it.parentPath in preferences.excludeFolders }
+        val included = videos.filter { preferences.isUnderScanFolder(path = it.path) }
         val sort = Sort(
             by = preferences.sortBy,
             order = preferences.sortOrder,
@@ -47,7 +48,7 @@ class GetFolderTreeMediaUseCase(
             mediaUnder(
                 root = folderPath,
                 videos = included,
-                preferences.excludeFolders,
+                emptyList(),
                 sort = sort,
                 thresholdDays = thresholdDays,
                 nowMillis = nowMillis,
@@ -55,7 +56,7 @@ class GetFolderTreeMediaUseCase(
         } else {
             topLevelMedia(
                 videos = included,
-                preferences.excludeFolders,
+                emptyList(),
                 sort = sort,
                 thresholdDays = thresholdDays,
                 nowMillis = nowMillis,

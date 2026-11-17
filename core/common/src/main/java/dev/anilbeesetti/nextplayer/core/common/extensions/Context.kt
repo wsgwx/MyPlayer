@@ -51,6 +51,31 @@ val Context.isTelevision: Boolean
     }
 
 /**
+ * Resolves the filesystem path of a SAF tree uri (as returned by ACTION_OPEN_DOCUMENT_TREE).
+ *
+ * Only storage volumes the app can address by path are supported: the primary volume resolves to
+ * /storage/emulated/0, other volumes to /storage/<volume id>. Returns null when the tree can't be
+ * expressed as a filesystem path.
+ */
+fun Context.getPathFromTreeUri(uri: Uri): String? {
+    if (!DocumentsContract.isTreeUri(uri)) return getPath(uri = uri)
+
+    val treeId = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()
+        ?: return null
+    val parts = treeId.split(":", limit = 2)
+    val volumeId = parts.firstOrNull().orEmpty()
+    val relativePath = parts.getOrNull(index = 1).orEmpty().trim('/')
+    if (volumeId.isEmpty()) return null
+
+    val root = if (volumeId.equals(other = "primary", ignoreCase = true)) {
+        Environment.getExternalStorageDirectory().path
+    } else {
+        "/storage/$volumeId"
+    }
+    return if (relativePath.isEmpty()) root else "$root/$relativePath"
+}
+
+/**
  * get path from uri
  * @param uri uri of the file
  * @return path of the file

@@ -14,9 +14,10 @@ import dev.anilbeesetti.nextplayer.core.common.extensions.scanStorage
 import dev.anilbeesetti.nextplayer.core.common.storagePermission
 import dev.anilbeesetti.nextplayer.core.database.converter.UriListConverter
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
-import dev.anilbeesetti.nextplayer.core.database.dao.PlaylistDao
+import dev.anilbeesetti.nextplayer.core.database.dao.RemovedVideoDao
 import dev.anilbeesetti.nextplayer.core.media.services.MediaService
 import dev.anilbeesetti.nextplayer.core.media.services.MediaVideo
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,7 +33,7 @@ import org.koin.core.annotation.Single
 @Single
 class LocalMediaSynchronizer(
     private val mediumStateDao: MediumStateDao,
-    private val playlistDao: PlaylistDao,
+    private val removedVideoDao: RemovedVideoDao,
     private val imageLoader: ImageLoader,
     private val mediaService: MediaService,
     @Named(DiQualifiers.APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
@@ -72,7 +73,15 @@ class LocalMediaSynchronizer(
 
         val currentMediaUris = media.mapTo(destination = mutableSetOf()) { it.uri.toString() }
 
-        playlistDao.removeMissingLocalItems(existingUris = currentMediaUris)
+        // Drop library-removal records whose file vanished outside the app, so a re-created file
+        // at the same path is listed again instead of staying hidden forever.
+        val removedVideos = removedVideoDao.getAll().first()
+        val staleRemovedUris = removedVideos
+            .filterNot { File(it.path).exists() }
+            .map { it.uriString }
+        if (staleRemovedUris.isNotEmpty()) {
+            removedVideoDao.deleteByUris(uris = staleRemovedUris)
+        }
 
         val (wantedMediaStates, unwantedMediaStates) = mediumStateDao.getAll().first().partition {
             it.uriString in currentMediaUris ||

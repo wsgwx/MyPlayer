@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaSession
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import coil3.ImageLoader
@@ -17,10 +18,6 @@ import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakeMediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakePreferencesRepository
-import dev.anilbeesetti.nextplayer.core.media.network.NetworkClientFactory
-import dev.anilbeesetti.nextplayer.core.media.network.NetworkConnectionResolver
-import dev.anilbeesetti.nextplayer.core.media.network.datasource.NetworkSessions
-import dev.anilbeesetti.nextplayer.core.media.network.datasource.NextDataSourceFactory
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -79,15 +76,7 @@ class PlaybackSpeedSessionTest {
                     }
                     single { ImageLoader.Builder(RuntimeEnvironment.getApplication()).build() }
                     single {
-                        NextDataSourceFactory(
-                            RuntimeEnvironment.getApplication(),
-                            sessions = NetworkSessions(
-                                resolver = NetworkConnectionResolver { null },
-                                clientFactory = NetworkClientFactory {
-                                    error(message = "No network playback in this test")
-                                },
-                            ),
-                        )
+                        DefaultDataSource.Factory(RuntimeEnvironment.getApplication())
                     }
                 },
             )

@@ -17,23 +17,30 @@ import org.koin.core.annotation.Single
 @Single
 class LocalSystemService(private val context: Context) : SystemService {
     private var pickDocumentTreeLauncher: SuspendActivityResultLauncher<Uri?, Uri?>? = null
+    private var pickImageLauncher: SuspendActivityResultLauncher<Array<String>, Uri?>? = null
 
     override fun initialize(activity: ComponentActivity) {
         val launcher = activity.registerForSuspendActivityResult(
             ActivityResultContracts.OpenDocumentTree(),
         )
+        val imageLauncher = activity.registerForSuspendActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        )
         activity.lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) {
                     pickDocumentTreeLauncher = launcher
+                    pickImageLauncher = imageLauncher
                 }
 
                 override fun onResume(owner: LifecycleOwner) {
                     pickDocumentTreeLauncher = launcher
+                    pickImageLauncher = imageLauncher
                 }
 
                 override fun onStop(owner: LifecycleOwner) {
                     if (pickDocumentTreeLauncher === launcher) pickDocumentTreeLauncher = null
+                    if (pickImageLauncher === imageLauncher) pickImageLauncher = null
                 }
             },
         )
@@ -45,6 +52,17 @@ class LocalSystemService(private val context: Context) : SystemService {
                 context.contentResolver.takePersistableUriPermission(
                     uri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+            }
+        }
+    }
+
+    override suspend fun pickImage(): Uri? = withContext(Dispatchers.Main.immediate) {
+        pickImageLauncher?.launch(input = arrayOf("image/*"))?.also { uri ->
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
                 )
             }
         }

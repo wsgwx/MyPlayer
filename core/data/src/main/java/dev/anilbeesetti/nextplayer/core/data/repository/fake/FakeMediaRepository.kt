@@ -32,12 +32,6 @@ class FakeMediaRepository : MediaRepository {
         folderPath == null || it.path.startsWith(prefix = folderPath)
     }
 
-    override fun observePlaybackHistory(): Flow<List<Video>> = updates.map {
-        videos.filter { it.lastPlayedAt != null }.sortedByDescending { it.lastPlayedAt?.time }
-    }
-
-    override fun observeTrashVideos(): Flow<List<Video>> = updates.map { emptyList() }
-
     override suspend fun getVideoByUri(uri: String): Video? = videos.find { it.uriString == uri }
 
     fun notifyMediaChanged() {
@@ -68,6 +62,9 @@ class FakeMediaRepository : MediaRepository {
     }
 
     override suspend fun updateMediumZoom(uri: String, zoom: Float) {
+    }
+
+    override suspend fun updateMediumUserReview(uri: String, rating: Float?, comment: String?) {
     }
 
     override suspend fun addExternalAudioToMedium(uri: String, audioUri: Uri) {

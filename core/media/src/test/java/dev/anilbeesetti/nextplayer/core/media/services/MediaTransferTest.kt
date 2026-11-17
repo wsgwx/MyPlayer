@@ -73,7 +73,10 @@ class MediaTransferTest {
         "transfer.documents",
         "target",
     )
-    private val service = LocalMediaOperationsService(context = context)
+    private val service = LocalMediaOperationsService(
+        context = context,
+        removedVideoDao = FakeRemovedVideoDao(),
+    )
 
     @Before
     fun setUp() {

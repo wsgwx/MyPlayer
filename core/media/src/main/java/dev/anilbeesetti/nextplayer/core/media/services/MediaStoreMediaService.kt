@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
+import dev.anilbeesetti.nextplayer.core.database.dao.RemovedVideoDao
 import org.koin.core.annotation.Named
 import org.koin.core.annotation.Single
 
@@ -41,6 +42,7 @@ import org.koin.core.annotation.Single
 class MediaStoreMediaService(
     private val context: Context,
     @Named(DiQualifiers.APPLICATION_SCOPE) private val applicationScope: CoroutineScope,
+    private val removedVideoDao: RemovedVideoDao,
 ) : MediaService {
 
     companion object {
@@ -96,10 +98,6 @@ class MediaStoreMediaService(
         fetchVideos(folderPath = folderPath)
     }
 
-    override fun observeTrashVideos(): Flow<List<MediaVideo>> = observeMedia {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) queryTrashVideos() else emptyList()
-    }
-
     private fun <T> observeMedia(query: suspend () -> List<T>): Flow<List<T>> = mediaChanges
         .map {
             try {
@@ -142,7 +140,14 @@ class MediaStoreMediaService(
         }
 
     override suspend fun fetchVideos(folderPath: String?): List<MediaVideo> =
-        withContext(Dispatchers.IO) { queryVideos(folderPath = folderPath) }
+        withContext(Dispatchers.IO) {
+            // Videos the user removed from the library keep their files but must never show up in
+            // listings; folder statistics are derived from this list, so filtering here covers both.
+            val removedUris = removedVideoDao.getUris().toHashSet()
+            queryVideos(folderPath = folderPath).filterNot { video ->
+                removedUris.contains(video.uri.toString())
+            }
+        }
 
     override suspend fun findVideo(uri: Uri): MediaVideo? = withContext(Dispatchers.IO) {
         return@withContext try {
@@ -195,31 +200,6 @@ class MediaStoreMediaService(
     private fun File.walkUp() = generateSequence(seed = parentFile) { it.parentFile }
 
     @RequiresApi(Build.VERSION_CODES.R)
-    private fun queryTrashVideos(): List<MediaVideo> {
-        val queryArgs = Bundle().apply {
-            putInt(
-                MediaStore.QUERY_ARG_MATCH_TRASHED,
-                MediaStore.MATCH_ONLY,
-            )
-            putStringArray(
-                android.content.ContentResolver.QUERY_ARG_SORT_COLUMNS,
-                arrayOf(MediaStore.Video.Media.DATE_MODIFIED),
-            )
-            putInt(
-                android.content.ContentResolver.QUERY_ARG_SORT_DIRECTION,
-                android.content.ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
-            )
-        }
-        return queryVideoCursor {
-            context.contentResolver.query(
-                VIDEO_COLLECTION_URI,
-                VIDEO_PROJECTION,
-                queryArgs,
-                null,
-            )
-        }
-    }
-
     private fun queryVideos(folderPath: String?): List<MediaVideo> {
         // A null folderPath scans every storage volume (e.g. SD cards / USB OTG). For a specific
         // folder, match it and its descendants, escaping LIKE metacharacters ('%', '_') in the path.

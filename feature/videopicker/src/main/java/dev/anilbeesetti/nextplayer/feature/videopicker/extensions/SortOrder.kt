@@ -29,6 +29,11 @@ fun Sort.Order.name(sortBy: Sort.By): String {
             Sort.Order.ASCENDING -> R.string.oldest
             Sort.Order.DESCENDING -> R.string.newest
         }
+
+        Sort.By.RATING -> when (this) {
+            Sort.Order.ASCENDING -> R.string.rating_low_first
+            Sort.Order.DESCENDING -> R.string.rating_high_first
+        }
     }
 
     return stringResource(id = stringRes)

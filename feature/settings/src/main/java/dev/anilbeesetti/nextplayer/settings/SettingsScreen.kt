@@ -105,13 +105,12 @@ private fun SettingsScreenContent(onAction: (SettingsAction) -> Unit) {
 }
 
 enum class Setting {
-    APPEARANCE,
     MEDIA_LIBRARY,
     PLAYER,
     GESTURES,
     AUDIO,
     SUBTITLE,
-    GENERAL,
+    ENCRYPTED_SPACE,
     ABOUT,
 }
 
@@ -121,12 +120,6 @@ private enum class SettingRow(
     val icon: ImageVector,
     val setting: Setting,
 ) {
-    APPEARANCE(
-        titleResId = R.string.appearance_name,
-        descriptionResId = R.string.appearance_description,
-        icon = NextIcons.Appearance,
-        setting = Setting.APPEARANCE,
-    ),
     MEDIA_LIBRARY(
         titleResId = R.string.media_library,
         descriptionResId = R.string.media_library_description,
@@ -157,11 +150,11 @@ private enum class SettingRow(
         icon = NextIcons.Subtitle,
         setting = Setting.SUBTITLE,
     ),
-    GENERAL(
-        titleResId = R.string.general_name,
-        descriptionResId = R.string.general_description,
-        icon = NextIcons.ExtraSettings,
-        setting = Setting.GENERAL,
+    ENCRYPTED_SPACE(
+        titleResId = R.string.vault,
+        descriptionResId = R.string.open_vault_description,
+        icon = NextIcons.Lock,
+        setting = Setting.ENCRYPTED_SPACE,
     ),
     ABOUT(
         titleResId = R.string.about_name,

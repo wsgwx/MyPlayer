@@ -466,11 +466,10 @@ class PlayerApiTest {
             subtitle,
             items[1].localConfiguration!!.subtitleConfigurations.single().uri,
         )
-        assertTrue(items.all { it.isExplicitPlaylistItem })
     }
 
     @Test
-    fun playlistWithoutExplicitFlagRespectsAutoplayAndMissingDataIsAdded() {
+    fun playlistWithoutExplicitFlagKeepsRequestedOrder() {
         val other = Uri.parse("https://example.com/other.mp4")
         val api = api(
             Intent(
@@ -488,14 +487,13 @@ class PlayerApiTest {
             ),
             api.getPlaylist(),
         )
-        assertFalse(
+        assertEquals(
+            2,
             api.createMediaItems(
                 api.getPlaylist(),
                 0,
                 emptyList(),
-            ).any {
-                it.isExplicitPlaylistItem
-            },
+            ).size,
         )
     }
 

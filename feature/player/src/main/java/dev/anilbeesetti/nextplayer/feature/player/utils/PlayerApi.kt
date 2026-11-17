@@ -163,15 +163,7 @@ class PlayerApi(private val intent: Intent) {
                         },
                     ).build(),
                 )
-                .build().let { item ->
-                    if (boolean("video_list_is_explicit") ==
-                        true
-                    ) {
-                        item.asExplicitPlaylistItem()
-                    } else {
-                        item
-                    }
-                }
+                .build()
         }
     }
 

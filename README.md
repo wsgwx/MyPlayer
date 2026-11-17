@@ -1,134 +1,54 @@
-![Next player banner](fastlane/metadata/android/en-US/images/featureGraphic.png)
+# MyPlayer
 
-# Next Player
+个人本地视频播放器，基于开源项目 [Next Player](https://github.com/anilbeesetti/nextplayer) 深度定制，仅供个人使用，非商用。
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/anilbeesetti/nextplayer.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/anilbeesetti/nextplayer/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Ddev.anilbeesetti.nextplayer%26l%3DGoogle%2520Play%26m%3Dv%24version)](https://play.google.com/store/apps/details?id=dev.anilbeesetti.nextplayer)
-[![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/dev.anilbeesetti.nextplayer)](https://apt.izzysoft.de/fdroid/index/apk/dev.anilbeesetti.nextplayer)
-[![F-Droid](https://img.shields.io/f-droid/v/dev.anilbeesetti.nextplayer?logo=f-droid&label=F-Droid&cacheSeconds=3600)](https://f-droid.org/packages/dev.anilbeesetti.nextplayer)
-[![GitHub all releases](https://img.shields.io/github/downloads/anilbeesetti/nextplayer/total?logo=github&cacheSeconds=3600)](https://github.com/anilbeesetti/nextplayer/releases/latest)
-[![Google Play](https://img.shields.io/endpoint?color=green&logo=google-play&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Ddev.anilbeesetti.nextplayer%26l%3Ddownloads%26m%3D%24totalinstalls)](https://play.google.com/store/apps/details?id=dev.anilbeesetti.nextplayer)
-[![Weblate project translated](https://img.shields.io/weblate/progress/next-player?logo=weblate&logoColor=white&cacheSeconds=36000)](https://hosted.weblate.org/engage/next-player/)
+播放内核为 AndroidX Media3 / ExoPlayer（当前 1.11.1，最新稳定版），界面全部重做为 Infuse / Google Photos 风格。
 
-Next Player is an Android native video player written in Kotlin. It provides a simple and easy-to-use interface for users to play videos on their
-Android devices
+## 截图
 
-**This project is still in development and is expected to have bugs. Please report any bugs you find in
-the [Issues](https://github.com/anilbeesetti/nextplayer/issues) section.**
+| 媒体库（列表） | 媒体库（网格） |
+|:---:|:---:|
+| ![home](docs/screenshots/home.png) | ![grid](docs/screenshots/grid.png) |
 
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="80"/>](https://play.google.com/store/apps/details?id=dev.anilbeesetti.nextplayer)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/fdroid/index/apk/dev.anilbeesetti.nextplayer)
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/dev.anilbeesetti.nextplayer/)
+| 选中操作条 | 外观设置 |
+|:---:|:---:|
+| ![selection](docs/screenshots/selection.png) | ![appearance](docs/screenshots/appearance.png) |
 
-> For Github releases, you can verify the app with the SHA-256 fingerprint certificate: `D3:7C:AB:F3:67:6C:F5:82:24:FB:24:2C:8D:D2:09:12:9D:05:88:03:79:29:5F:AA:A6:D0:FB:60:7B:EC:13:1B`
+## 特性
 
-## Screenshots
+### 媒体库
+- **Infuse 风格卡片**：海报式网格 / 信息式列表，缩略图上叠加时长、播放进度、新片标记与评分徽章
+- **1–10 分评分 + 文字评论**：选中视频 → "评分"，为影片打分并写下看点；评分徽章显示在缩略图右上角，可按分数排序（高分在前）
+- **按评分排序**：长按顶栏"模式切换"按钮打开快速设置，支持按标题 / 时长 / 路径 / 大小 / 日期 / 评分排序
+- **滑动选择 + 浮动操作条**：长按进入多选，底部浮动操作条（播放 / 加密 / 重命名 / 信息 / 评分 / 删除），媒体库与隐私空间共用同一套操作条
+- **扫描文件夹白名单**：只显示勾选的文件夹，可添加任意文件夹（SAF）
+- **已移除记录恢复**：从媒体库删除只是移除记录，可在"设置 → 媒体库 → 已移除的记录"中单条或全部恢复
 
-### Phone
+### 隐私空间
+- 输入 PIN（支持生物识别）进入的隐藏视频空间
+- 隐藏 = 移入隐藏目录（O(1) 重命名，无转码无损），取消隐藏即恢复
+- 与媒体库一致的手势、卡片与操作条体验
 
-<div style="width:100%; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+### 外观
+- **5 套手调配色方案**（影院蓝 / 暖琥珀 / 橘红 / 海洋蓝 / 森林绿），每套含完整浅色 + 深色 Material 配色
+- **图片背景**：可选任意照片作全局背景，原图全清晰显示（不模糊、不压暗），界面以半透明卡片浮于其上
+- 深色模式跟随系统
 
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width=19% alt="Home folders">](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width=19% alt="Demo folder videos">](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width=19% alt="Quick settings">](fastlane/metadata/android/en-US/images/phoneScreenshots/3.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width=19% alt="Grid view">](fastlane/metadata/android/en-US/images/phoneScreenshots/4.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" width=19% alt="Search results">](fastlane/metadata/android/en-US/images/phoneScreenshots/6.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" width=19% alt="Add network connection">](fastlane/metadata/android/en-US/images/phoneScreenshots/7.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/8.png" width=19% alt="Appearance settings">](fastlane/metadata/android/en-US/images/phoneScreenshots/8.png)
-</div>
+### 交互
+- 左滑进入隐私空间，右滑返回
+- 顶栏直达外观设置、布局切换、设置
 
-### Player UI
+## 构建
 
-<div style="width:100%; display:flex; justify-content:space-between;">
+```bash
+./gradlew :app:assembleDebug
+# 输出: app/build/outputs/apk/debug/app-<abi>-debug.apk
+```
 
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width=49% alt="Phone player controls">](fastlane/metadata/android/en-US/images/phoneScreenshots/5.png)
-[<img src="fastlane/metadata/android/en-US/images/tvScreenshots/3.png" width=49% alt="TV player controls">](fastlane/metadata/android/en-US/images/tvScreenshots/3.png)
-</div>
+要求 JDK 17 与 Android SDK。
 
-### Android TV
+## 致谢与许可
 
-<div style="width:100%; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-
-[<img src="fastlane/metadata/android/en-US/images/tvScreenshots/1.png" width=49% alt="TV home folders">](fastlane/metadata/android/en-US/images/tvScreenshots/1.png)
-[<img src="fastlane/metadata/android/en-US/images/tvScreenshots/2.png" width=49% alt="TV demo folder videos">](fastlane/metadata/android/en-US/images/tvScreenshots/2.png)
-[<img src="fastlane/metadata/android/en-US/images/tvScreenshots/4.png" width=49% alt="TV appearance settings">](fastlane/metadata/android/en-US/images/tvScreenshots/4.png)
-</div>
-
-## Player intent API
-
-Next Player supports MX Player-compatible VIEW intents, with additional playback
-speed and direct background-play options. See the [Player intent API reference](PLAYER_API.md)
-for integration examples, supported extras, URI permissions, playback results,
-and compatibility details.
-
-## Supported formats
-
-- **Video**: H.263, H.264 AVC (Baseline Profile; Main Profile on Android 6+), H.265 HEVC, MPEG-4 SP, VP8, VP9, AV1
-    - Support depends on Android device
-- **Audio**: Vorbis, Opus, FLAC, ALAC, PCM/WAVE (μ-law, A-law), MP1, MP2, MP3, AMR (NB, WB), AAC (LC, ELD, HE; xHE on Android 9+), AC-3, E-AC-3, DTS,
-  DTS-HD, TrueHD
-    - Support provided by ExoPlayer FFmpeg extension
-- **Subtitles**: SRT, SSA, ASS, TTML, VTT, DVB
-    - SSA/ASS has limited styling support see [this issue](https://github.com/google/ExoPlayer/issues/8435)
-
-## Features
-
-- Native Android app with simple and easy-to-use interface
-- Completely free and open source and without any ads or excessive permissions
-- Software decoders for h264 and hevc
-- Audio/Subtitle track selection
-- Vertical swipe to change brightness (left) / volume (right)
-- Horizontal swipe to seek through video
-- [Material 3 (You)](https://m3.material.io/) support
-- Media picker with tree, folder and file view modes
-- Play videos from url
-- Play videos from storage access framework (Android Document picker)
-- Control playback speed
-- External Subtitle support
-- Zoom gesture
-- Picture-in-picture mode
-- Background playback
-- Android TV version
-- Search Functionality
-- Subtitle delay
-- Network storage support (SMB/FTP/SFTP/WebDAV)
-
-## Planned Features
-
-- External Audio support
-- Online subtitles download
-
-## Contributing
-
-Contributions are welcome!
-
-### Developer documentation
-
-- [Runtime decoder switching](feature/player/DECODER_SWITCHING.md)
-
-### Translating
-
-You can help translate Next Player on [Hosted Weblate](https://hosted.weblate.org/engage/next-player/).
-
-[![Translate status](https://hosted.weblate.org/widgets/next-player/-/multi-auto.svg)](https://hosted.weblate.org/engage/next-player/)
-
-## Credits
-
-### Open Source Projects
-
-- [Findroid](https://github.com/jarnedemeulemeester/findroid)
-- [Just (Video) Player](https://github.com/moneytoo/Player)
-- [LibreTube](https://github.com/libre-tube/LibreTube)
-- [ReadYou](https://github.com/Ashinch/ReadYou)
-- [Seal](https://github.com/JunkFood02/Seal)
-- ...
-
-### Special Thanks
-
-[<img src="https://hosted.weblate.org/widgets/next-player/-/287x66-white.png"  width="200"/>](https://hosted.weblate.org/engage/next-player/)
-
-Thanks to **Weblate** for providing free hosting for the project.
-
-## License
-
-Next Player is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for more information.
+- 上游项目：[anilbeesetti/nextplayer](https://github.com/anilbeesetti/nextplayer)
+- 主题配色方案参考：RKDream
+- 本项目沿用上游 [GPLv3](LICENSE) 许可证

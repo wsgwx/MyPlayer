@@ -5,6 +5,7 @@ import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.Sort
 import dev.anilbeesetti.nextplayer.core.model.Video
+import dev.anilbeesetti.nextplayer.core.model.isUnderScanFolder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -24,12 +25,12 @@ class GetSortedVideosUseCase(
         preferencesRepository.applicationPreferences,
     ) { videoItems, preferences ->
 
-        val nonExcludedVideos = videoItems.filterNot { it.parentPath in preferences.excludeFolders }
+        val scannedVideos = videoItems.filter { preferences.isUnderScanFolder(path = it.path) }
 
         val sort = Sort(
             by = preferences.sortBy,
             order = preferences.sortOrder,
         )
-        nonExcludedVideos.sortedWith(sort.videoComparator())
+        scannedVideos.sortedWith(sort.videoComparator())
     }.flowOn(context = defaultDispatcher)
 }

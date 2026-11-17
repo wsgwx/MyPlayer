@@ -27,23 +27,27 @@ internal fun SelectionAction(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isTv: Boolean = false,
+    isDestructive: Boolean = false,
+    enabled: Boolean = true,
 ) {
+    val contentColor = when {
+        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+        isDestructive -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Column(
         modifier = modifier
             .defaultMinSize(
-                minWidth = 75.dp,
-                minHeight = 64.dp,
+                minWidth = 64.dp,
+                minHeight = 56.dp,
             )
             .tvFocusRing(
                 isTv = isTv,
                 shape = RoundedCornerShape(12.dp),
             )
             .clip(shape = RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(
-                horizontal = 16.dp,
-                vertical = 8.dp,
-            ),
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -51,13 +55,13 @@ internal fun SelectionAction(
             imageVector = imageVector,
             contentDescription = title,
             modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = contentColor,
         )
         Spacer(modifier = Modifier.size(4.dp))
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelMedium,
+            color = contentColor,
             textAlign = TextAlign.Center,
         )
     }

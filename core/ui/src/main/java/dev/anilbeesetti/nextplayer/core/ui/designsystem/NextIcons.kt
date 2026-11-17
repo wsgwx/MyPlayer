@@ -5,16 +5,19 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.CompareArrows
 import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.RateReview
+import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material.icons.rounded.AppSettingsAlt
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.BrightnessHigh
+import androidx.compose.material.icons.rounded.FormatColorFill
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CenterFocusStrong
@@ -58,11 +61,11 @@ import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.LocalMovies
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MiscellaneousServices
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Movie
-import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PanToolAlt
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.Pinch
@@ -96,12 +99,16 @@ import androidx.compose.material.icons.rounded.Update
 object NextIcons {
     val Add = Icons.Rounded.Add
     val Appearance = Icons.Rounded.Palette
+    val ColorFill = Icons.Rounded.FormatColorFill
     val ArrowBack = Icons.AutoMirrored.Rounded.ArrowBack
     val ArrowForward = Icons.AutoMirrored.Rounded.ArrowForward
     val ArrowDownward = Icons.Rounded.ArrowDownward
     val ArrowUpward = Icons.Rounded.ArrowUpward
     val Audio = Icons.Rounded.Audiotrack
     val Background = Icons.Rounded.FlipToBack
+    val Star = Icons.Rounded.Star
+    val StarOutline = Icons.Rounded.StarOutline
+    val Review = Icons.Rounded.RateReview
     val Bold = Icons.Rounded.FormatBold
     val Brightness = Icons.Rounded.BrightnessHigh
     val Calendar = Icons.Rounded.CalendarMonth
@@ -141,8 +148,6 @@ object NextIcons {
     val Pinch = Icons.Rounded.Pinch
     val Play = Icons.Rounded.PlayArrow
     val Player = Icons.Rounded.PlayCircle
-    val Playlist = Icons.AutoMirrored.Rounded.PlaylistPlay
-    val PlaylistAdd = Icons.AutoMirrored.Rounded.PlaylistAdd
     val Priority = Icons.Rounded.PriorityHigh
     val Replay = Icons.Rounded.Replay10
     val Resume = Icons.Rounded.ResetTv
@@ -183,6 +188,7 @@ object NextIcons {
     val Image = Icons.Rounded.Image
     val Frame = Icons.Rounded.FilterFrames
     val Lock = Icons.Rounded.Lock
+    val LockOpen = Icons.Rounded.LockOpen
     val Fingerprint = Icons.Rounded.Fingerprint
     val DragHandle = Icons.Rounded.DragHandle
     val Reorder = Icons.Rounded.SwapVert
