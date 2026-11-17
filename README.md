@@ -36,14 +36,58 @@
 移除了上游的自动全盘扫描、网络播放、播放历史、播放列表、搜索等功能；新增扫描白名单、评分、隐私空间、主题与背景定制。
 
 ## 构建
+## 构建
+
+### 1. 环境要求
+
+| 依赖 | 版本 | 说明 |
+| --- | --- | --- |
+| JDK | 17 | 需 `JAVA_HOME` 指向 JDK 17（不要用系统默认的 8） |
+| Android SDK | Platform 37 | 需 `ANDROID_HOME` 指向 SDK 目录 |
+| 网络 | 可访问 Maven Central / Google Maven | 首次构建需下载依赖 |
+
+### 2. 安装 SDK（已有可跳过）
+
+用 [commandlinetools](https://developer.android.com/studio#command-line-tools-only) 最小化安装：
 
 ```bash
-JAVA_HOME=/path/to/jdk-17 ANDROID_HOME=/path/to/android-sdk ./gradlew :app:assembleDebug
+mkdir -p ~/android-sdk/cmdline-tools
+unzip commandlinetools-*.zip -d ~/android-sdk/cmdline-tools
+mv ~/android-sdk/cmdline-tools/cmdline-tools ~/android-sdk/cmdline-tools/latest
+
+# 接受许可并安装所需组件
+yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-37" "build-tools;37.0.0" "platform-tools"
 ```
 
-产物位于 `app/build/outputs/apk/debug/`，命名为 `MyPlayer-<abi>-v<version>-debug.apk`。
+### 3. 配置环境变量
 
-- minSdk 24（Android 6.0）
+```bash
+export JAVA_HOME=/path/to/jdk-17
+export ANDROID_HOME=~/android-sdk
+```
+
+### 4. 构建
+
+```bash
+git clone https://github.com/wsgwx/MyPlayer.git
+cd MyPlayer
+./gradlew :app:assembleDebug
+```
+
+产物在 `app/build/outputs/apk/debug/`，按 ABI 分包：
+
+- `app-arm64-v8a-debug.apk` — 现代手机（绝大多数）
+- `app-universal-debug.apk` — 全架构通用包
+
+安装：`adb install -r app-arm64-v8a-debug.apk`，或把 APK 传到手机直接安装。
+
+发布版：`./gradlew :app:assembleRelease`（需自行配置签名）。
+
+### 版本信息
+
+- minSdk 24（Android 6.0） / targetSdk 37
+- Gradle 9.9 / AGP 9.5.1 / Kotlin 2.4.21
 - 包名 `com.wsgwx.myplayer`
 
 ## 许可
