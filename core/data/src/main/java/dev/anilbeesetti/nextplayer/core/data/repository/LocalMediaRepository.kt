@@ -13,6 +13,7 @@ import dev.anilbeesetti.nextplayer.core.data.mappers.toVideoState
 import dev.anilbeesetti.nextplayer.core.data.mappers.toVideoStreamInfo
 import dev.anilbeesetti.nextplayer.core.data.models.VideoState
 import dev.anilbeesetti.nextplayer.core.database.converter.UriListConverter
+import dev.anilbeesetti.nextplayer.core.database.dao.HiddenVideoDao
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
 import dev.anilbeesetti.nextplayer.core.database.entities.MediumStateEntity
 import dev.anilbeesetti.nextplayer.core.datastore.datasource.AppPreferencesDataSource
@@ -36,28 +37,57 @@ import org.koin.core.annotation.Factory
 @Factory
 class LocalMediaRepository(
     private val mediumStateDao: MediumStateDao,
+    private val hiddenVideoDao: HiddenVideoDao,
     private val mediaService: MediaService,
     private val appPreferencesDataSource: AppPreferencesDataSource,
     private val context: Context,
 ) : MediaRepository {
 
-    override fun observeFolders(folderPath: String?): Flow<List<Folder>> =
-        mediaService.observeFolders(folderPath = folderPath).map { mediaFolders ->
-            mediaFolders.map { it.toFolder() }
+    override fun observeFolders(folderPath: String?): Flow<List<Folder>> = combine(
+        mediaService.observeFolders(folderPath = folderPath),
+        hiddenVideoDao.getAll(),
+    ) { mediaFolders, hiddenVideos ->
+        // The vault hides videos in place, so MediaStore still counts them; subtract.
+        val hiddenByFolder = hiddenVideos
+            .map { it.vaultPath }
+            .groupBy { it.substringBeforeLast('/', missingDelimiterValue = "") }
+            .mapValues { it.value.size }
+        mediaFolders.map { folder ->
+            folder.toFolder().let { folderInfo ->
+                folderInfo.copy(
+                    videosCount = (folderInfo.videosCount - (hiddenByFolder[folder.path] ?: 0))
+                        .coerceAtLeast(0),
+                )
+            }
         }
+    }
 
     override fun observeVideos(folderPath: String?): Flow<List<Video>> = combine(
         mediaService.observeVideos(folderPath = folderPath),
         mediumStateDao.getAll(),
+        hiddenVideoDao.getAll(),
     ) {
             mediaVideos,
             mediumStates,
+            hiddenVideos,
         ->
-        val statesMap = mediumStates.associateBy { it.uriString }
-        mediaVideos.map { mediaVideo ->
-            val mediaState = statesMap[mediaVideo.uri.toString()]
-            mediaVideo.toVideo(mediaState = mediaState)
+        // Cover both the renamed file and the original name: MediaStore may still carry the
+        // original record until its next scan catches up with the rename.
+        val hiddenPaths = hiddenVideos.fold(
+            initial = mutableSetOf<String>(),
+        ) { acc, entity ->
+            acc.add(entity.vaultPath)
+            acc.add(entity.originalPath)
+            acc
         }
+        val statesMap = mediumStates.associateBy { it.uriString }
+        mediaVideos
+            .map { mediaVideo ->
+                val mediaState = statesMap[mediaVideo.uri.toString()]
+                mediaVideo.toVideo(mediaState = mediaState)
+            }
+            // The vault hides videos in place: drop records hidden in the vault.
+            .filterNot { it.path in hiddenPaths }
     }
 
     override suspend fun fetchFolders(folderPath: String?): List<Folder> =

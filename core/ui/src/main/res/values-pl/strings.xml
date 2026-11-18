@@ -307,12 +307,6 @@
     <string name="hide_video_info">Ukryte wideo są przenoszone do prywatnego sejfu chronionego kodem PIN i usuwane z galerii.</string>
     <string name="hiding_videos_in_progress">Ukrywanie…</string>
     <string name="unhiding_videos_in_progress">Odkrywanie…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Nie udało się przywrócić pliku do pierwotnego katalogu — przeniesiono go do katalogu Filmy/</item>
-        <item quantity="few">Nie udało się przywrócić %1$d wideo do ich pierwotnych katalogów — zostały przeniesione do katalogu Filmy/</item>
-        <item quantity="many">Nie udało się przywrócić %1$d wideo do ich pierwotnych katalogów — zostały przeniesione do katalogu Filmy/</item>
-        <item quantity="other">Nie udało się przywrócić %1$d wideo do ich pierwotnych katalogów — zostały przeniesione do katalogu Filmy/</item>
-    </plurals>
     <string name="hiding_videos">Ukrywanie…</string>
     <string name="set_vault_pin">Ustaw kod PIN do sejfu</string>
     <string name="set_vault_pin_description">Utwórz 4-cyfrowy kod PIN, aby zabezpieczyć swoje ukryte wideo</string>

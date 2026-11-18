@@ -8,10 +8,10 @@ interface VaultRepository {
 
     fun observeHiddenVideos(): Flow<List<Video>>
 
-    /** Moves [videos] into the vault and records them as hidden. */
-    suspend fun hideVideos(videos: List<Video>)
+    /** Hides [videos] in place by renaming them. Returns how many were actually hidden. */
+    suspend fun hideVideos(videos: List<Video>): Int
 
-    /** Moves the given vault [videos] back to their original locations. */
+    /** Renames the given vault [videos] back to their original names. */
     suspend fun unhideVideos(videos: List<Video>): UnhideResult
 
     /** Permanently deletes the given vault [videos] (both the file and the record). */
@@ -25,6 +25,6 @@ interface VaultRepository {
  *
  * @param relocatedCount number of videos that couldn't be restored to their original folder
  *   (e.g. a custom folder or storage root, which scoped storage disallows) and were instead
- *   placed in the fallback directory.
+ *   renamed back to their original names.
  */
-data class UnhideResult(val relocatedCount: Int = 0)
+data class UnhideResult(val requestedCount: Int = 0, val restoredCount: Int = 0)

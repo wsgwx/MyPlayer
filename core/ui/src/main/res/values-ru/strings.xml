@@ -307,12 +307,6 @@
     <string name="hidden_videos">Скрытые видео</string>
     <string name="hiding_videos_in_progress">Скрытие…</string>
     <string name="unhiding_videos_in_progress">Восстановление…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Не удалось восстановить %1$d видео в исходную папку — оно перемещено в Movies/</item>
-        <item quantity="few">Не удалось восстановить %1$d видео в исходные папки — они перемещены в Movies/</item>
-        <item quantity="many">Не удалось восстановить %1$d видео в исходные папки — они перемещены в Movies/</item>
-        <item quantity="other">Не удалось восстановить %1$d видео в исходные папки — они перемещены в Movies/</item>
-    </plurals>
     <string name="hiding_videos">Скрытие…</string>
     <string name="set_vault_pin">Установка PIN-кода для секретной папки</string>
     <string name="set_vault_pin_description">Создайте 4-значный PIN-код для защиты скрытых видео</string>

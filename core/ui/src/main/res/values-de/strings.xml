@@ -349,10 +349,6 @@
     <string name="hide_video_info">Versteckte Videos werden in einen privaten, durch eine PIN geschützten Tresor verschoben und aus deiner Galerie entfernt.</string>
     <string name="hiding_videos_in_progress">Verstecken…</string>
     <string name="unhiding_videos_in_progress">Anzeigen…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Wiederherstellung im ursprünglichen Ordner nicht möglich – stattdessen nach Movies/ verschoben</item>
-        <item quantity="other">Wiederherstellung von %1$d Videos im ursprünglichen Ordner nicht möglich – stattdessen nach Movies/ verschoben</item>
-    </plurals>
     <string name="hiding_videos">Verstecken…</string>
     <string name="set_vault_pin">Vault PIN setzen</string>
     <string name="set_vault_pin_description">Erstelle eine 4-stellige PIN um deine versteckten Videos zu schützen</string>

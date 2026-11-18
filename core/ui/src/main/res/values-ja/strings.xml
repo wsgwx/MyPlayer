@@ -336,9 +336,6 @@
     <string name="hide_video_info">非表示にした動画は、PIN コードで保護されたプライベート保管庫に移動され、ギャラリーから削除されます。</string>
     <string name="hiding_videos_in_progress">非表示にしています…</string>
     <string name="unhiding_videos_in_progress">非表示を解除しています…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="other">%1$d 本の動画を元のフォルダーに復元できませんでした - Movies/ に移動しました</item>
-    </plurals>
     <string name="hiding_videos">非表示にしています…</string>
     <string name="set_vault_pin">保管庫の PIN を設定</string>
     <string name="set_vault_pin_description">非表示にした動画を保護するために 4 桁の PIN コードを作成してください</string>

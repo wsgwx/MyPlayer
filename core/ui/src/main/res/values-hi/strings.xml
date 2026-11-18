@@ -308,10 +308,6 @@
     <string name="unhide">सामने लाएँ</string>
     <string name="hiding_videos_in_progress">छुपाया जा रहा है…</string>
     <string name="unhiding_videos_in_progress">दिखाया जा रहा है…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">अपने ओरिजिनल फ़ोल्डर में रीस्टोर नहीं किया जा सका — Movies/ में ले जाया गया</item>
-        <item quantity="other">%1$d वीडियो को उनके ओरिजिनल फ़ोल्डर में रीस्टोर नहीं किया जा सका — Movies/ में ले जाया गया</item>
-    </plurals>
     <string name="hiding_videos">छुपाया जा रहा है…</string>
     <string name="set_vault_pin">वॉल्ट पिन सेट करें</string>
     <string name="set_vault_pin_description">अपने छिपे हुए वीडियो को सुरक्षित रखने के लिए 4 अंकों का पिन बनाएं</string>

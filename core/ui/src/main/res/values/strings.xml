@@ -255,8 +255,10 @@
     <string name="rating_unrated">Unrated</string>
     <string name="rate">Rate</string>
     <string name="all_files_access_title">Grant all-files access?</string>
-    <string name="all_files_access_message">With all-files access, hiding a video is an instant rename with no system confirmation. Without it, each hide copies the whole file and Android shows an "allow modifying" dialog every time.</string>
+    <string name="all_files_access_message">Hiding a video renames it in place, which needs all-files access. Once granted, hiding and unhiding are instant with no system confirmation dialogs.</string>
     <string name="all_files_access_go">Go to settings</string>
+    <string name="vault_hide_failed">Some videos failed to hide</string>
+    <string name="vault_unhide_failed">Some videos failed to unhide</string>
     <string name="rating_score">Score</string>
     <string name="rating_comment">Comment</string>
     <string name="rating_comment_hint">What stands out about this film?</string>
@@ -413,10 +415,6 @@
     <string name="hide_video_info">Hidden videos are moved into a private space protected by a PIN and removed from your gallery.</string>
     <string name="hiding_videos_in_progress">Hiding…</string>
     <string name="unhiding_videos_in_progress">Unhiding…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Couldn\'t restore to its original folder — moved to Movies/</item>
-        <item quantity="other">Couldn\'t restore %1$d videos to their original folders — moved to Movies/</item>
-    </plurals>
     <string name="hiding_videos">Hiding\u2026</string>
     <string name="set_vault_pin">Set private space PIN</string>
     <string name="set_vault_pin_description">Create a 4-digit PIN to protect your hidden videos</string>
@@ -439,8 +437,8 @@
     <string name="vault_biometric_unavailable">Set up a supported fingerprint or face in your device settings to enable biometric unlock.</string>
     <string name="vault_empty_title">No hidden videos</string>
     <string name="vault_empty_description">Videos you hide will show up here. Long press a video and tap Hide to add it to the private space.</string>
-    <string name="unhide_one_video_confirmation">Unhide this video? It will be moved back to its original location.</string>
-    <string name="unhide_videos_confirmation">Unhide %1$d videos? They will be moved back to their original location.</string>
+    <string name="unhide_one_video_confirmation">Unhide this video? It will show up in the media library again.</string>
+    <string name="unhide_videos_confirmation">Unhide %1$d videos? They will show up in the media library again.</string>
     <string name="delete_one_video_from_vault">Permanently delete this video?</string>
     <string name="delete_videos_from_vault">Permanently delete %1$d videos?</string>
     <string name="delete_from_vault_info">This action cannot be undone. The video will be permanently deleted from your device.</string>

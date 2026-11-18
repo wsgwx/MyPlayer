@@ -308,10 +308,6 @@
     <string name="hide_video_info">ویدیوهای پنهان به گاوصندوق خصوصی محافظت‌شده با رمز کوتاه منتقل شده و از گالری شما برداشته می‌شوند.</string>
     <string name="hiding_videos_in_progress">در حال پنهان کردن…</string>
     <string name="unhiding_videos_in_progress">در حال نمایش…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">نتوانست به پوشه اصلی بازگردانده شود — به Movies/ منتقل شد</item>
-        <item quantity="other">نتوانست %1$d ویدیو را به پوشه‌های اصلی بازگرداند — به Movies/ منتقل شدند</item>
-    </plurals>
     <string name="hiding_videos">در حال پنهان کردن…</string>
     <string name="set_vault_pin">تنظیم رمز کوتاه گاوصندوق</string>
     <string name="set_vault_pin_description">ساخت رمز کوتاه ۴ رقمی برای محافظت از ویدیوهای پنهان</string>

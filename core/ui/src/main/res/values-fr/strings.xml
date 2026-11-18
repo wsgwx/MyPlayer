@@ -324,11 +324,6 @@
     <string name="hide_video_info">Les vidéos ajoutées aux éléments masquées sont protégées par un code PIN et retirées de votre gallerie.</string>
     <string name="hiding_videos_in_progress">Ajout aux éléments masqués en cours…</string>
     <string name="unhiding_videos_in_progress">Retrait des éléments masqués en cours…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Impossible de restaurer la vidéo vers son dossier d\'origine — placée dans le dossier Films/</item>
-        <item quantity="many">Impossible de restaurer %1$d vidéos vers leurs dossiers d\'origine — placées dans le dossier Films/</item>
-        <item quantity="other">Impossible de restaurer %1$d vidéos vers leurs dossiers d\'origine — placées dans le dossier Films/</item>
-    </plurals>
     <string name="hiding_videos">Ajout aux éléments masqués en cours…</string>
     <string name="set_vault_pin">Définir un code PIN pour les éléments masqués</string>
     <string name="set_vault_pin_description">Définir un code PIN à 4 chiffres pour protéger les vidéos ajoutées aux éléments masqués</string>

@@ -308,9 +308,6 @@
     <string name="hide_video_info">숨긴 동영상은 PIN으로 보호되는 비공개 보관함으로 이동되며 갤러리에서 사라집니다.</string>
     <string name="hiding_videos_in_progress">숨기는 중…</string>
     <string name="unhiding_videos_in_progress">숨기기 해제 중…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="other">동영상 %1$d개를 원래 폴더로 복원할 수 없어 Movies/로 이동했습니다.</item>
-    </plurals>
     <string name="hiding_videos">숨기는 중…</string>
     <string name="set_vault_pin">보관함 PIN 설정</string>
     <string name="set_vault_pin_description">숨긴 동영상을 보호할 4자리 PIN 만들기</string>

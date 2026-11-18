@@ -356,10 +356,6 @@
         <item quantity="other">%1$d video taşındı, ancak orijinali silinemedi</item>
     </plurals>
     <string name="cannot_move_to_same_folder">Aynı klasöre taşınamıyor</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Orijinal klasörü geri yüklenemedi — Filmler/ klasörüne taşındı</item>
-        <item quantity="other">%1$d videonun orijinal klasörü geri yüklenemedi — Filmler/ klasörüne taşındı</item>
-    </plurals>
     <string name="transfer_file_progress">Dosya %1$d / %2$d</string>
     <string name="home">Ana Sayfa</string>
     <string name="network">Ağ</string>

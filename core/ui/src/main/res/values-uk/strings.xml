@@ -307,12 +307,6 @@
     <string name="hide_video_info">Приховані відео переміщуються в особисте сховище, захищене PIN-кодом, і видаляються з вашої галереї.</string>
     <string name="hiding_videos_in_progress">Приховування…</string>
     <string name="unhiding_videos_in_progress">Показування…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Не вдалося відновити в початкову теку: переміщено до Movies/</item>
-        <item quantity="few">Не вдалося відновити %1$d відео в початкову теку: переміщено до Movies/</item>
-        <item quantity="many">Не вдалося відновити %1$d відео в початкову теку: переміщено до Movies/</item>
-        <item quantity="other">Не вдалося відновити %1$d відео в початкову теку: переміщено до Movies/</item>
-    </plurals>
     <string name="hiding_videos">Приховування…</string>
     <string name="set_vault_pin">Встановити PIN-код сховища</string>
     <string name="set_vault_pin_description">Створіть 4-значний PIN-код, щоб захистити свої приховані відео</string>

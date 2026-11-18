@@ -72,9 +72,10 @@ class LocalMediaRepositoryTest {
         }
         val repository = LocalMediaRepository(
             mediumStateDao = dao,
+            hiddenVideoDao = database.hiddenVideoDao(),
             mediaService = mediaService,
             appPreferencesDataSource = preferences,
-            RuntimeEnvironment.getApplication(),
+            context = RuntimeEnvironment.getApplication(),
         )
         val vaultUri =
             "content://${RuntimeEnvironment.getApplication().packageName}" +

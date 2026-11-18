@@ -308,10 +308,6 @@
     <string name="hide_video_info">ਲੁਕਵੇਂ ਵੀਡੀਓ ਇੱਕ ਪਿੰਨ ਦੁਆਰਾ ਸੁਰੱਖਿਅਤ ਇੱਕ ਨਿੱਜੀ ਵਾਲਟ ਵਿੱਚ ਭੇਜੇ ਜਾਂਦੇ ਹਨ ਅਤੇ ਤੁਹਾਡੀ ਗੈਲਰੀ ਵਿੱਚੋਂ ਹਟਾ ਦਿੱਤੇ ਜਾਂਦੇ ਹਨ।</string>
     <string name="hiding_videos_in_progress">ਲੁਕਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…</string>
     <string name="unhiding_videos_in_progress">ਦਿਖਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">ਇਸਦੇ ਮੂਲ ਫ਼ੋਲਡਰ ਵਿੱਚ ਰੀਸਟੋਰ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ — ਮੂਵੀਜ਼/ ਵਿੱਚ ਭੇਜਿਆ ਗਿਆ</item>
-        <item quantity="other">%1$d ਵੀਡੀਓਜ਼ ਨੂੰ ਉਹਨਾਂ ਦੇ ਅਸਲ ਫ਼ੋਲਡਰਾਂ ਵਿੱਚ ਰੀਸਟੋਰ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ — ਮੂਵੀਜ਼/ ਵਿੱਚ ਭੇਜਿਆ ਗਿਆ</item>
-    </plurals>
     <string name="hiding_videos">ਲੁਕਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…</string>
     <string name="set_vault_pin">ਵਾਲਟ ਪਿੰਨ ਸੈੱਟ ਕਰੋ</string>
     <string name="set_vault_pin_description">ਆਪਣੇ ਲੁਕਵੇਂ ਵੀਡੀਓਜ਼ ਨੂੰ ਸੁਰੱਖਿਅਤ ਰੱਖਣ ਲਈ 4-ਅੰਕਾਂ ਦਾ ਪਿੰਨ ਬਣਾਓ</string>

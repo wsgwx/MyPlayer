@@ -308,12 +308,6 @@
     <string name="unhide">Odkrýt</string>
     <string name="unhide_one_video_confirmation">Odkrýt vybrané video? Video bude přesunuto zpět do předešlého umístění.</string>
     <string name="unhide_videos_confirmation">Odkrýt %1$d videa/jí? Videa budou přesunuty zpět do předešlých umístěních.</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Video se nemohlo obnovit do předešlé složky - přesunuto do Movies/</item>
-        <item quantity="few">%1$d videa se nemohly obnovit do předešlých složek - přesunuty do Movies/</item>
-        <item quantity="many">%1$d videjí se nemohly obnovit do předešlých složek - přesunuty do Movies/</item>
-        <item quantity="other">%1$d videjí se nemohly obnovit do předešlých složek - přesunuty do Movies/</item>
-    </plurals>
     <string name="vault">Sejf</string>
     <string name="hide_one_video_confirmation">Skrýt vybrané video?</string>
     <string name="hide_videos_confirmation">Skrýt %1$d videa/jí?</string>

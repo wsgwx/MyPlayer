@@ -67,11 +67,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import dev.anilbeesetti.nextplayer.core.common.extensions.isTelevision
 import dev.anilbeesetti.nextplayer.core.model.MediaLayoutMode
 import dev.anilbeesetti.nextplayer.core.model.Sort
@@ -107,36 +103,6 @@ import dev.anilbeesetti.nextplayer.feature.videopicker.state.rememberSelectionMa
 fun VaultScreen(viewModel: VaultViewModel) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    LaunchedEffect(
-        key1 = lifecycleOwner,
-        key2 = viewModel,
-    ) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is VaultEvent.VideosRelocated -> {
-                        val message = context.resources.getQuantityString(
-                            R.plurals.videos_relocated_to_movies,
-                            event.count,
-                            event.count,
-                        )
-                        Toast.makeText(
-                            context,
-                            message,
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    LifecycleResumeEffect(key1 = viewModel) {
-        viewModel.refreshAllFilesAccess()
-        onPauseOrDispose {}
-    }
 
     VaultScreenContent(
         state = state,

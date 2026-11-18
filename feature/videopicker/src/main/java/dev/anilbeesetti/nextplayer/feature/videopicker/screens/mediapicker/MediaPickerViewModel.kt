@@ -160,9 +160,9 @@ class MediaPickerViewModel(
                 it.copy(mediaInfo = null)
             }
 
-            is MediaPickerAction.RequestAllFilesAccess -> requestAllFilesAccess()
-
             is MediaPickerAction.ResumePendingHide -> resumePendingHide()
+
+            is MediaPickerAction.RequestAllFilesAccess -> requestAllFilesAccess()
 
             is MediaPickerAction.DismissAllFilesAccessDialog -> stateInternal.update {
                 it.copy(showAllFilesAccessDialog = false)
@@ -236,9 +236,7 @@ class MediaPickerViewModel(
                 output.openVault()
                 return@launch
             }
-            // Without all-files access the vault move degrades to a streamed copy and
-            // MediaStore pops a per-batch "allow modifying" confirmation. Guide the user
-            // to grant it once: afterwards hiding is an instant rename with no dialog.
+            // Hiding renames the file in place, which needs all-files access on R+.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
                 !Environment.isExternalStorageManager()
             ) {
@@ -247,21 +245,6 @@ class MediaPickerViewModel(
             }
             hideVideos(videos = videos)
         }
-    }
-
-    /** Resumes hiding videos remembered before first-time PIN setup in the vault. */
-    private fun resumePendingHide() {
-        val videos = pendingHideVideos ?: return
-        viewModelScope.launch {
-            if (!vaultPinRepository.hasPinSet()) return@launch
-            pendingHideVideos = null
-            hideVideos(videos = videos)
-        }
-    }
-
-    private suspend fun hideVideos(videos: List<Video>) {
-        vaultRepository.hideVideos(videos = videos)
-        stateInternal.update { it.copy(hideCompletedMarker = it.hideCompletedMarker + 1) }
     }
 
     private fun requestAllFilesAccess() {
@@ -278,6 +261,36 @@ class MediaPickerViewModel(
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }
+    }
+
+    /** Resumes hiding videos remembered before first-time PIN setup in the vault. */
+    private fun resumePendingHide() {
+        val videos = pendingHideVideos ?: return
+        viewModelScope.launch {
+            if (!vaultPinRepository.hasPinSet()) return@launch
+            // Same rename permission check as the regular hide flow; keep the pending list so
+            // the hide resumes automatically once the user returns with the access granted.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                !Environment.isExternalStorageManager()
+            ) {
+                stateInternal.update { it.copy(showAllFilesAccessDialog = true) }
+                return@launch
+            }
+            pendingHideVideos = null
+            hideVideos(videos = videos)
+        }
+    }
+
+    private suspend fun hideVideos(videos: List<Video>) {
+        val hiddenCount = vaultRepository.hideVideos(videos = videos)
+        if (hiddenCount < videos.size) {
+            Toast.makeText(
+                context,
+                context.getString(R.string.vault_hide_failed),
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+        stateInternal.update { it.copy(hideCompletedMarker = it.hideCompletedMarker + 1) }
     }
 
     private fun deleteSelectedItems(selectedItems: Set<SelectionItem>) {
@@ -474,9 +487,9 @@ data class MediaPickerUiState(
     val preferences: ApplicationPreferences = ApplicationPreferences(),
     val mediaInfo: dev.anilbeesetti.nextplayer.core.model.MediaInfo? = null,
     val transferFlow: TransferFlowState = TransferFlowState.Idle,
-    val showAllFilesAccessDialog: Boolean = false,
     /** Increments each time a vault hide finishes so the UI can clear the selection. */
     val hideCompletedMarker: Int = 0,
+    val showAllFilesAccessDialog: Boolean = false,
 ) {
     val recentlyPlayedFolder: Folder?
         get() = recentlyPlayedVideo?.let { video ->
@@ -515,7 +528,7 @@ sealed interface MediaPickerAction {
     data class RateVideo(val uri: String, val rating: Float?, val comment: String) :
         MediaPickerAction
     data object DismissMediaInfo : MediaPickerAction
+    data object ResumePendingHide : MediaPickerAction
     data object RequestAllFilesAccess : MediaPickerAction
     data object DismissAllFilesAccessDialog : MediaPickerAction
-    data object ResumePendingHide : MediaPickerAction
 }

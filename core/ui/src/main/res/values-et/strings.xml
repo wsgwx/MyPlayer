@@ -351,10 +351,6 @@
     <string name="cannot_move_to_same_folder">Samasse kausta teisaldamine pole võimalik</string>
     <string name="reset_pin_and_delete_all">Lähtesta PIN-kood ja kustuta kõik</string>
     <string name="reset_vault_pin_confirmation">Sinu PIN-koodi lähtestamine kustutab kõik turvakaustas hetkel leiduvad videod - nende lukustust pole lihtsalt võimalik avada. Kas jätkad?</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Video taastamine tema algkausta ei õnnestunud, selle asemel tõstsin kausta „Movies/“</item>
-        <item quantity="other">%1$d video taastamine nende algkausta ei õnnestunud, selle asemel tõstsin kausta „Movies/“</item>
-    </plurals>
     <string name="vault_empty_description">Sinu peidetavad videod saavad olema nähtavad siin. Turvakausta lisamiseks vajuta videot pikalt ja vali „Peida“.</string>
     <string name="unhide_one_video_confirmation">Kas lõpetad selle video peitmine? Ta tõstetakse tagasi oma algsesse kausta.</string>
     <string name="unhide_videos_confirmation">Kas lõpetad %1$d video peitmine? Nad tõstetakse tagasi oma algse(te)sse kausta(desse).</string>

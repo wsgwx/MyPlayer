@@ -307,14 +307,6 @@
     <string name="hide_video_info">يتم نقل الفيديوهات المخفية إلى خزنة خاصة محمية برمز PIN، وإزالتها من معرض الصور.</string>
     <string name="hiding_videos_in_progress">جارٍ الإخفاء…</string>
     <string name="unhiding_videos_in_progress">جارٍ الإظهار…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="zero">تعذّرت استعادة الفيديوهات إلى مجلداتها الأصلية — تم نقلها إلى Movies/</item>
-        <item quantity="one">تعذّرت استعادته إلى مجلده الأصلي — تم نقله إلى Movies/</item>
-        <item quantity="two">تعذّرت استعادة فيديوهَين إلى مجلديهما الأصليين — تم نقلهما إلى Movies/</item>
-        <item quantity="few">تعذّرت استعادة %1$d فيديوهات إلى مجلداتها الأصلية — تم نقلها إلى Movies/</item>
-        <item quantity="many">تعذّرت استعادة %1$d فيديو إلى مجلداتها الأصلية — تم نقلها إلى Movies/</item>
-        <item quantity="other">تعذّرت استعادة %1$d فيديو إلى مجلداتها الأصلية — تم نقلها إلى Movies/</item>
-    </plurals>
     <string name="hiding_videos">جارٍ الإخفاء…</string>
     <string name="set_vault_pin">تعيين رمز الخزنة</string>
     <string name="set_vault_pin_description">أنشئ رمزاً مكوّناً من 4 أرقام لحماية فيديوهاتك المخفية</string>

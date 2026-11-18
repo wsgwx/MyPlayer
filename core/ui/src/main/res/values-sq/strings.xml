@@ -308,10 +308,6 @@
     <string name="hide_video_info">Videot e fshehura zhvendosen në një kasafortë private të mbrojtur nga një PIN dhe hiqen nga galeria jote.</string>
     <string name="hiding_videos_in_progress">Po fshihet…</string>
     <string name="unhiding_videos_in_progress">Po çfshihet…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Nuk u rikthye dot te dosja e saj origjinale — u zhvendos te Movies/</item>
-        <item quantity="other">Nuk u rikthyen dot %1$d video te dosjet e tyre origjinale — u zhvendosën te Movies/</item>
-    </plurals>
     <string name="hiding_videos">Po fshihet…</string>
     <string name="set_vault_pin">Cakto PIN-in e kasafortës</string>
     <string name="set_vault_pin_description">Krijo një PIN me 4 shifra për të mbrojtur videot e tua të fshehura</string>

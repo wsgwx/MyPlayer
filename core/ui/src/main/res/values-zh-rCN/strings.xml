@@ -226,8 +226,10 @@
     <string name="rating_unrated">未评分</string>
     <string name="rate">评分</string>
     <string name="all_files_access_title">开启"所有文件访问"？</string>
-    <string name="all_files_access_message">开启后，移入隐私空间只是瞬间改个文件名，不会再弹系统确认框。不开启的话，每次加密都要复制整个文件，大视频会很慢，而且每次都会弹出"是否允许修改"的确认。</string>
+    <string name="all_files_access_message">加密通过原地重命名文件实现，需要"所有文件访问"权限。开启后加密、解密都是瞬间完成，且不会再弹系统确认框。</string>
     <string name="all_files_access_go">去设置</string>
+    <string name="vault_hide_failed">部分视频加密失败</string>
+    <string name="vault_unhide_failed">部分视频解密失败</string>
     <string name="rating_score">分数</string>
     <string name="rating_comment">评论</string>
     <string name="rating_comment_hint">写写这部片子的看点…</string>
@@ -372,9 +374,6 @@
     <string name="hide_video_info">隐藏的视频会移入由 PIN 码保护的隐私空间并从图库移除</string>
     <string name="hiding_videos_in_progress">正在隐藏…</string>
     <string name="unhiding_videos_in_progress">正在取消隐藏…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="other">无法将 %1$d 个视频恢复到原始文件夹——已移动到 Movies 文件夹</item>
-    </plurals>
     <string name="hiding_videos">正在隐藏…</string>
     <string name="set_vault_pin">设置隐私空间 PIN 码</string>
     <string name="set_vault_pin_description">创建四位数 PIN 码以保护隐藏的视频</string>
@@ -388,8 +387,8 @@
     <string name="open_vault">打开隐私空间</string>
     <string name="vault_empty_title">没有隐藏的视频</string>
     <string name="vault_empty_description">隐藏的视频会出现在此。长按视频并点按“隐藏”可将其添加到隐私空间。</string>
-    <string name="unhide_one_video_confirmation">取消隐藏此视频吗？它会被移回原始位置。</string>
-    <string name="unhide_videos_confirmation">取消隐藏 %1$d 个视频吗？它们会被移回原始位置。</string>
+    <string name="unhide_one_video_confirmation">取消隐藏此视频吗？它将重新出现在媒体库中。</string>
+    <string name="unhide_videos_confirmation">取消隐藏 %1$d 个视频吗？它们将重新出现在媒体库中。</string>
     <string name="delete_one_video_from_vault">永久删除此视频吗？</string>
     <string name="delete_videos_from_vault">永久删除 %1$d 个视频吗？</string>
     <string name="delete_from_vault_info">此操作无法撤销。视频会从设备永久删除。</string>

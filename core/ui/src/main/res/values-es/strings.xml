@@ -311,11 +311,6 @@
     <string name="hide_video_info">Los vídeos ocultos se trasladan a una bóveda privada protegida por un PIN y se eliminan de tu galería.</string>
     <string name="hiding_videos_in_progress">Ocultando…</string>
     <string name="unhiding_videos_in_progress">Mostrando…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">No se pudo restaurar a su carpeta original — se movió a Movies/</item>
-        <item quantity="many">No se pudieron restaurar %1$d vídeos a sus carpetas originales — se movieron a Movies/</item>
-        <item quantity="other">No se pudieron restaurar %1$d vídeos a sus carpetas originales — se movieron a Movies/</item>
-    </plurals>
     <string name="hiding_videos">Ocultando…</string>
     <string name="hide_videos_confirmation">¿Ocultar %1$d vídeos?</string>
     <string name="enter_vault_pin">Ingrese su PIN</string>

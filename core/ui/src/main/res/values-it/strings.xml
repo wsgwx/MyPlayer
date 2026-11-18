@@ -361,11 +361,6 @@
     <string name="hide_video_info">I video nascondi vengono spostati in un archivio privato e rimossi dalla galleria.</string>
     <string name="hiding_videos_in_progress">Nascondendo…</string>
     <string name="unhiding_videos_in_progress">Mostrando…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Impossibile ripristinare nella cartella originale: spostato in Film/</item>
-        <item quantity="many">Impossibile ripristinare %1$d video nelle cartelle originali: spostati in Film/</item>
-        <item quantity="other">Impossibile ripristinare %1$d video nelle cartelle originali: spostati in Film/</item>
-    </plurals>
     <string name="hiding_videos">Nascondendo…</string>
     <string name="set_vault_pin">Imposta PIN archivio privato</string>
     <string name="set_vault_pin_description">Crea un PIN di 4 cifre per proteggere i tuoi video nascosti</string>

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HiddenVideoDao {
 
-    @Insert
+    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
     suspend fun insert(hiddenVideo: HiddenVideoEntity): Long
 
     @Query("SELECT * FROM hidden_video ORDER BY hidden_at DESC")

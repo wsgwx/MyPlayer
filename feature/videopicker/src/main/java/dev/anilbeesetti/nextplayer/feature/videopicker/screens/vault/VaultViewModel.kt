@@ -1,11 +1,9 @@
 package dev.anilbeesetti.nextplayer.feature.videopicker.screens.vault
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.runtime.Stable
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
@@ -18,14 +16,13 @@ import dev.anilbeesetti.nextplayer.core.model.MediaInfo
 import dev.anilbeesetti.nextplayer.core.model.MediaLayoutMode
 import dev.anilbeesetti.nextplayer.core.model.Sort
 import dev.anilbeesetti.nextplayer.core.model.Video
+import dev.anilbeesetti.nextplayer.core.ui.R
 import dev.anilbeesetti.nextplayer.core.ui.base.MviViewModel
 import dev.anilbeesetti.nextplayer.feature.videopicker.state.SelectionItem
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
@@ -52,14 +49,10 @@ class VaultViewModel(
     private val stateInternal = MutableStateFlow(value = VaultUiState())
     override val state: StateFlow<VaultUiState> = stateInternal.asStateFlow()
 
-    private val eventsInternal = Channel<VaultEvent>()
-    val events = eventsInternal.receiveAsFlow()
-
     private var hiddenVideosJob: Job? = null
     private var hasVaultSortOverride = false
 
     init {
-        refreshAllFilesAccess()
         viewModelScope.launch {
             val hasPin = vaultPinRepository.hasPinSet()
             val biometricEnabled = hasPin && vaultPinRepository.isBiometricEnabled()
@@ -125,8 +118,6 @@ class VaultViewModel(
             is VaultAction.DismissMediaInfo -> stateInternal.update { it.copy(mediaInfo = null) }
 
             is VaultAction.UpdateSort -> updateSort(action.sort)
-
-            is VaultAction.OpenAllFilesAccessSettings -> openAllFilesAccessSettings()
 
             is VaultAction.UpdateQuickSettings -> {
                 updateSort(action.sort)
@@ -221,28 +212,6 @@ class VaultViewModel(
         collectHiddenVideos()
     }
 
-    private fun openAllFilesAccessSettings() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
-        val intent = Intent(
-            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-            Uri.parse("package:${context.packageName}"),
-        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        runCatching { context.startActivity(intent) }
-            .recoverCatching {
-                context.startActivity(
-                    Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            }
-    }
-
-    /** Re-reads the all-files access toggle; the user may have just changed it in Settings. */
-    fun refreshAllFilesAccess() {
-        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
-            Environment.isExternalStorageManager()
-        stateInternal.update { it.copy(hasAllFilesAccess = granted) }
-    }
-
     private fun collectHiddenVideos() {
         hiddenVideosJob?.cancel()
         hiddenVideosJob = viewModelScope.launch {
@@ -274,8 +243,12 @@ class VaultViewModel(
             stateInternal.update { it.copy(isUnhiding = true) }
             val result = vaultRepository.unhideVideos(selectionItems.toVideos())
             stateInternal.update { it.copy(isUnhiding = false) }
-            if (result.relocatedCount > 0) {
-                eventsInternal.send(VaultEvent.VideosRelocated(result.relocatedCount))
+            if (result.restoredCount < result.requestedCount) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.vault_unhide_failed),
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
     }
@@ -324,7 +297,6 @@ data class VaultUiState(
     ),
     val mediaInfo: MediaInfo? = null,
     val preferences: ApplicationPreferences = ApplicationPreferences(),
-    val hasAllFilesAccess: Boolean = true,
 )
 
 sealed interface VaultAction {
@@ -344,9 +316,4 @@ sealed interface VaultAction {
     data object DismissMediaInfo : VaultAction
     data class UpdateSort(val sort: Sort) : VaultAction
     data class UpdateQuickSettings(val layoutMode: MediaLayoutMode, val sort: Sort) : VaultAction
-    data object OpenAllFilesAccessSettings : VaultAction
-}
-
-sealed interface VaultEvent {
-    data class VideosRelocated(val count: Int) : VaultEvent
 }

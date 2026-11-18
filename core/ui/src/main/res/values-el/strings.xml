@@ -307,10 +307,6 @@
     <string name="hide_video_info">Τα κρυφά βίντεο μετακινούνται σε μια κρύπτη που προστατεύεται από PIN και αφαιρούνται από τη συλλογή σας.</string>
     <string name="hiding_videos_in_progress">Απόκρυψη…</string>
     <string name="unhiding_videos_in_progress">Εμφάνιση…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="one">Δεν ήταν δυνατή η επαναφορά στον αρχικό φάκελο — μετακινήθηκε στο Movies/</item>
-        <item quantity="other">Δεν ήταν δυνατή η επαναφορά %1$d βίντεο στους αρχικούς τους φακέλους — μετακινήθηκαν στο Movies/</item>
-    </plurals>
     <string name="hiding_videos">Απόκρυψη…</string>
     <string name="set_vault_pin">Ορισμός PIN κρύπτης</string>
     <string name="set_vault_pin_description">Δημιουργήστε έναν τετραψήφιο κωδικό PIN για να προστατεύσετε τα κρυμμένα βίντεό σας</string>

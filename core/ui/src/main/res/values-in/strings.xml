@@ -332,9 +332,6 @@
     <string name="hide_video_info">Video tersembunyi dipindahkan ke brankas pribadi yang dilindungi PIN dan dihapus dari galeri Anda.</string>
     <string name="hiding_videos_in_progress">Menyembunyikan…</string>
     <string name="unhiding_videos_in_progress">Menampilkan…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="other">Tidak dapat mengembalikan %1$d video ke folder asalnya — dipindahkan ke Movies/</item>
-    </plurals>
     <string name="hiding_videos">Menyembunyikan…</string>
     <string name="set_vault_pin">Atur PIN brankas</string>
     <string name="set_vault_pin_description">Buat PIN 4 digit untuk melindungi video tersembunyi Anda</string>

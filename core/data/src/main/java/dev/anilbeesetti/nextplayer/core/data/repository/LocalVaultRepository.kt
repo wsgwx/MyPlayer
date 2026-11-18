@@ -1,13 +1,8 @@
 package dev.anilbeesetti.nextplayer.core.data.repository
 
-import android.content.ContentValues
 import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
-import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import dev.anilbeesetti.nextplayer.core.common.Logger
@@ -20,412 +15,170 @@ import dev.anilbeesetti.nextplayer.core.data.mappers.toVideoStreamInfo
 import dev.anilbeesetti.nextplayer.core.database.dao.HiddenVideoDao
 import dev.anilbeesetti.nextplayer.core.database.dao.MediumStateDao
 import dev.anilbeesetti.nextplayer.core.database.entities.HiddenVideoEntity
-import dev.anilbeesetti.nextplayer.core.media.services.MediaOperationsService
-import dev.anilbeesetti.nextplayer.core.media.services.MediaService
 import dev.anilbeesetti.nextplayer.core.model.MediaInfo
 import dev.anilbeesetti.nextplayer.core.model.Video
 import io.github.anilbeesetti.nextlib.mediainfo.MediaInfoBuilder
 import java.io.File
 import java.util.UUID
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.koin.core.annotation.Single
 
+/**
+ * The vault hides videos **in place** by renaming them: the file never leaves its folder, it
+ * just gets a random dot-prefixed name with no extension, so it still lives at the original
+ * path while galleries and other players no longer recognize it as a video. Unhiding renames
+ * it back; permanent deletion removes the renamed file and the record.
+ *
+ * Renaming requires all-files access on API 30+ (see the hide flow in the media picker).
+ */
 @Single
 class LocalVaultRepository(
     private val hiddenVideoDao: HiddenVideoDao,
     private val mediumStateDao: MediumStateDao,
-    private val mediaOperationsService: MediaOperationsService,
-    private val preferencesRepository: PreferencesRepository,
-    private val mediaService: MediaService,
     private val context: Context,
 ) : VaultRepository {
 
     private val vaultMutationMutex = Mutex()
-    private val pendingVaultPaths = MutableStateFlow<Set<String>>(value = emptySet())
 
-    /**
-     * Hidden folder on shared storage. A dot-prefixed directory is skipped by MediaProvider, so
-     * system galleries and other players never index it, and files survive an app uninstall.
-     */
-    private val vaultDir: File by lazy {
-        val external = Environment.getExternalStorageDirectory()
-        val preferred = File(
-            external,
-            VAULT_DIR_NAME,
-        )
-        val created = runCatching {
-            preferred.mkdirs() || preferred.isDirectory
-        }.getOrDefault(false)
-        if (created && preferred.canWrite()) {
-            preferred
-        } else {
-            val base = context.getExternalFilesDir(null) ?: context.filesDir
-            File(
-                base,
-                VAULT_DIR_NAME,
-            ).apply { if (!exists()) mkdirs() }
+    override fun observeHiddenVideos(): Flow<List<Video>> =
+        hiddenVideoDao.getAll().map { entities ->
+            entities
+                .filter { File(it.vaultPath).exists() }
+                .map { it.toVideo() }
         }
-    }
 
-    override fun observeHiddenVideos(): Flow<List<Video>> = combine(
-        hiddenVideoDao.getAll(),
-        flow2 = pendingVaultPaths,
-    ) {
-            entities,
-            pendingPaths,
-        ->
-        entities
-            .filter { it.vaultPath !in pendingPaths && File(it.vaultPath).exists() }
-            .map { it.toVideo() }
-    }
+    override suspend fun hideVideos(videos: List<Video>): Int = vaultMutationMutex.withLock {
+        val hiddenAt = System.currentTimeMillis()
+        var hiddenCount = 0
+        videos.forEach { video ->
+            val source = withContext(context = Dispatchers.IO) {
+                context.getPath(uri = video.uriString.toUri())?.let(::File)
+                    ?: video.path.let(::File).takeIf { it.exists() }
+            } ?: return@forEach
 
-    override suspend fun hideVideos(videos: List<Video>): Unit = vaultMutationMutex.withLock {
-        val reservations = reserveVideos(videos = videos)
-        if (reservations.isEmpty()) return@withLock
-
-        try {
-            val moveResult = try {
-                Result.success(moveIntoVault(reservations = reservations))
-            } catch (e: Exception) {
-                Result.failure(exception = e)
-            }
-            reconcileReservations(
-                reservations = reservations,
-                moveResult = moveResult,
-            )
-            moveResult.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        } finally {
-            revealReservations(reservations.map { it.destination.absolutePath })
-        }
-    }
-
-    /**
-     * Moves reserved videos into the vault.
-     *
-     * Within one filesystem a rename is O(1) regardless of file size, which is what makes hiding a
-     * multi-gigabyte video instant. Anything the rename can't handle (a different volume such as a
-     * removable SD card, or a file the app may not rename) falls back to the streaming copy.
-     */
-    private suspend fun moveIntoVault(reservations: List<HideReservation>): Map<Uri, File?> {
-        val moved = linkedMapOf<Uri, File?>()
-        val fallback = mutableListOf<HideReservation>()
-        withContext(Dispatchers.IO) {
-            reservations.forEach { reservation ->
-                val source = context.getPath(uri = reservation.sourceUri)?.let(::File)
-                val renamed = source != null &&
-                    runCatching {
-                        reservation.destination.parentFile?.mkdirs()
-                        source.renameTo(reservation.destination)
-                    }.getOrDefault(false)
-                if (renamed) {
-                    moved[reservation.sourceUri] = reservation.destination
-                } else {
-                    fallback += reservation
-                }
-            }
-        }
-        if (fallback.isNotEmpty()) {
-            moved += mediaOperationsService.moveMedia(
-                targets = fallback.associate { it.sourceUri to it.destination },
-            )
-        }
-        return moved
-    }
-
-    private suspend fun reserveVideos(videos: List<Video>): List<HideReservation> {
-        val attemptedVaultPaths = mutableListOf<String>()
-        return try {
-            videos.mapNotNull { video ->
-                val destination = createVaultDestination(video.nameWithExtension)
-                attemptedVaultPaths += destination.absolutePath
-                pendingVaultPaths.update { it + destination.absolutePath }
-                val rowId = try {
-                    hiddenVideoDao.insert(video.toHiddenVideoEntity(destination = destination))
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    cleanUpReservations(vaultPaths = listOf(destination.absolutePath))
-                    return@mapNotNull null
-                }
-                HideReservation(
-                    rowId = rowId,
-                    video.uriString.toUri(),
-                    destination = destination,
-                )
-            }
-        } catch (e: Exception) {
-            cleanUpReservations(vaultPaths = attemptedVaultPaths)
-            throw e
-        }
-    }
-
-    private fun Video.toHiddenVideoEntity(destination: File): HiddenVideoEntity = HiddenVideoEntity(
-        vaultPath = destination.absolutePath,
-        originalPath = path,
-        displayName = nameWithExtension,
-        duration = duration,
-        size = size,
-        width = width,
-        height = height,
-        hiddenAt = System.currentTimeMillis(),
-    )
-
-    private data class HideReservation(val rowId: Long, val sourceUri: Uri, val destination: File)
-
-    private fun createVaultDestination(displayName: String): File {
-        val extension = File(displayName).extension.takeIf { it.isNotBlank() }
-        val suffix = extension?.let { ".$it" }.orEmpty()
-        return generateSequence {
-            File(
-                vaultDir,
-                "${UUID.randomUUID()}$suffix",
-            )
-        }
-            .first { !it.exists() }
-    }
-
-    private suspend fun reconcileReservations(
-        reservations: List<HideReservation>,
-        moveResult: Result<Map<Uri, File?>>,
-    ) {
-        val movedFiles = moveResult.getOrNull()
-        val (committed, failed) = reservations.partition { reservation ->
-            // If moving threw, the destination is the only evidence that a move committed.
-            reservation.destination.exists() &&
-                (movedFiles == null || movedFiles[reservation.sourceUri] == reservation.destination)
-        }
-        withContext(context = NonCancellable) {
-            if (failed.isNotEmpty()) {
-                runCatching { hiddenVideoDao.deleteByIds(failed.map { it.rowId }) }
+            // Same-directory rename: O(1) regardless of file size.
+            val destination = createHiddenName(source)
+            val renamed = withContext(context = Dispatchers.IO) {
+                runCatching { source.renameTo(destination) }
                     .onFailure {
-                        logCleanupFailure(
-                            operation = "delete failed hide reservations",
-                            throwable = it,
+                        Logger.logError(
+                            tag = TAG,
+                            message = "hide: rename failed for $source: $it",
                         )
                     }
+                    .getOrDefault(false)
             }
-            if (committed.isNotEmpty()) {
-                mediumStateDao.clearLastPlayedTimes(committed.map { it.sourceUri.toString() })
+            if (!renamed) return@forEach
+
+            runCatching {
+                MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(source.path, destination.path),
+                    null,
+                    null,
+                )
             }
+
+            hiddenVideoDao.insert(
+                HiddenVideoEntity(
+                    vaultPath = destination.absolutePath,
+                    originalPath = source.absolutePath,
+                    displayName = video.nameWithExtension,
+                    duration = video.duration,
+                    size = video.size,
+                    width = video.width,
+                    height = video.height,
+                    hiddenAt = hiddenAt,
+                ),
+            )
+            // Hidden videos must not surface as "last played" anywhere.
+            mediumStateDao.clearLastPlayedTimes(listOf(video.uriString))
+            hiddenCount++
         }
-    }
-
-    private suspend fun cleanUpReservations(vaultPaths: List<String>) {
-        if (vaultPaths.isEmpty()) return
-        withContext(context = NonCancellable) {
-            runCatching { hiddenVideoDao.deleteByVaultPaths(vaultPaths = vaultPaths) }
-                .onFailure {
-                    logCleanupFailure(
-                        operation = "delete reservations by vault path",
-                        throwable = it,
-                    )
-                }
-        }
-        revealReservations(vaultPaths = vaultPaths)
-    }
-
-    private fun revealReservations(vaultPaths: List<String>) {
-        pendingVaultPaths.update { it - vaultPaths.toSet() }
-    }
-
-    private fun logCleanupFailure(operation: String, throwable: Throwable) {
-        Logger.logError(
-            tag = TAG,
-            message = "Failed to $operation: ${throwable.stackTraceToString()}",
-        )
+        return hiddenCount
     }
 
     override suspend fun unhideVideos(videos: List<Video>): UnhideResult =
         vaultMutationMutex.withLock {
-            val restored = withContext(Dispatchers.IO) {
-                entitiesFor(videos = videos).mapNotNull { entity ->
-                    restoreToMediaStore(entity = entity)?.let { relocated ->
-                        entity.id to relocated
-                    }
+            var restored = 0
+            val entities = entitiesFor(videos = videos)
+            entities.forEach { entity ->
+                val vaultFile = File(entity.vaultPath)
+                if (!vaultFile.exists()) {
+                    hiddenVideoDao.deleteByIds(listOf(entity.id))
+                    return@forEach
                 }
-            }
-            if (restored.isNotEmpty()) hiddenVideoDao.deleteByIds(restored.map { it.first })
-            UnhideResult(relocatedCount = restored.count { (_, relocated) -> relocated })
-        }
-
-    /**
-     * Recreates the video in shared storage via a MediaStore insert, streams the vault file
-     * into it, then deletes the vault copy. Returns `null` on failure, or whether the file had to
-     * be relocated to the fallback directory (`true`) rather than its original folder (`false`).
-     *
-     * MediaStore is used for every API level because scoped storage (API 29+) forbids writing
-     * directly into shared storage. On older versions the exact original path is restored via the
-     * `DATA` column; on newer ones the folder is expressed as a `RELATIVE_PATH`.
-     */
-    private fun restoreToMediaStore(entity: HiddenVideoEntity): Boolean? {
-        val vaultFile = File(entity.vaultPath)
-        if (!vaultFile.exists()) return null
-
-        // Fast path: rename straight back to the original location, then let the scanner index it.
-        val originalFile = File(entity.originalPath)
-        val renamedBack = runCatching {
-            originalFile.parentFile?.mkdirs()
-            originalFile.parentFile?.canWrite() == true && vaultFile.renameTo(originalFile)
-        }.getOrDefault(false)
-        if (renamedBack) {
-            runCatching {
-                MediaScannerConnection.scanFile(
-                    context,
-                    arrayOf(entity.originalPath),
-                    null,
-                    null,
-                )
-            }
-            return false
-        }
-
-        val resolver = context.contentResolver
-        val inserted = insertPendingItem(entity = entity) ?: return null
-
-        return try {
-            resolver.openOutputStream(inserted.uri)?.use { output ->
-                vaultFile.inputStream().use { it.copyTo(out = output) }
-            } ?: error(message = "Unable to open output stream for ${inserted.uri}")
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                resolver.update(
-                    inserted.uri,
-                    ContentValues().apply {
-                        put(
-                            MediaStore.MediaColumns.IS_PENDING,
-                            0,
+                val originalFile = File(entity.originalPath)
+                val renamedBack = withContext(context = Dispatchers.IO) {
+                    runCatching {
+                        originalFile.parentFile?.mkdirs()
+                        vaultFile.renameTo(originalFile)
+                    }.getOrDefault(false)
+                }
+                if (renamedBack) {
+                    restored++
+                    runCatching {
+                        MediaScannerConnection.scanFile(
+                            context,
+                            arrayOf(originalFile.path, entity.vaultPath),
+                            null,
+                            null,
                         )
-                    },
-                    null,
-                    null,
-                )
-            }
-            vaultFile.delete()
-            inserted.relocated
-        } catch (e: Exception) {
-            resolver.delete(
-                inserted.uri,
-                null,
-                null,
-            ) // roll back the partially-written entry
-            null
-        }
-    }
-
-    /**
-     * Inserts an empty (pending) MediaStore row to receive the restored file.
-     *
-     * On API 29+ it tries the original folder first, then falls back to [DEFAULT_RESTORE_DIR] when
-     * MediaStore rejects it — which happens for custom top-level folders (e.g. `ls/`) or files that
-     * were at storage root, since scoped storage only permits the standard media directories.
-     * Pre-scoped-storage, the exact original path is restored via the `DATA` column.
-     */
-    private fun insertPendingItem(entity: HiddenVideoEntity): InsertedItem? {
-        val resolver = context.contentResolver
-        val mimeType = MimeTypeMap.getSingleton()
-            .getMimeTypeFromExtension(File(entity.vaultPath).extension.lowercase()) ?: "video/*"
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(
-                    MediaStore.MediaColumns.DISPLAY_NAME,
-                    entity.displayName,
-                )
-                put(
-                    MediaStore.MediaColumns.MIME_TYPE,
-                    mimeType,
-                )
-                put(
-                    MediaStore.MediaColumns.DATA,
-                    entity.originalPath,
-                )
-            }
-            val uri = runCatching {
-                resolver.insert(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                    values,
-                )
-            }.getOrNull()
-            return uri?.let {
-                InsertedItem(
-                    uri = it,
-                    relocated = false,
-                )
-            }
-        }
-
-        val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        val originalDir = relativePathFor(entity.originalPath)
-        val candidateDirs = listOfNotNull(
-            originalDir,
-            DEFAULT_RESTORE_DIR,
-        ).distinct()
-
-        return candidateDirs.firstNotNullOfOrNull { relativePath ->
-            val values = ContentValues().apply {
-                put(
-                    MediaStore.MediaColumns.DISPLAY_NAME,
-                    entity.displayName,
-                )
-                put(
-                    MediaStore.MediaColumns.MIME_TYPE,
-                    mimeType,
-                )
-                put(
-                    MediaStore.MediaColumns.RELATIVE_PATH,
-                    relativePath,
-                )
-                put(
-                    MediaStore.MediaColumns.IS_PENDING,
-                    1,
-                )
-            }
-            runCatching {
-                resolver.insert(
-                    collection,
-                    values,
-                )
-            }.getOrNull()
-                ?.let {
-                    InsertedItem(
-                        uri = it,
-                        relocated = relativePath != originalDir,
+                    }
+                    hiddenVideoDao.deleteByIds(listOf(entity.id))
+                } else {
+                    // Keep the record: the renamed file still exists and must stay recoverable.
+                    Logger.logError(
+                        tag = TAG,
+                        message = "unhide: rename back failed for ${entity.vaultPath}",
                     )
                 }
+            }
+            UnhideResult(
+                requestedCount = entities.size,
+                restoredCount = restored,
+            )
         }
-    }
-
-    private data class InsertedItem(val uri: Uri, val relocated: Boolean)
-
-    /**
-     * The MediaStore `RELATIVE_PATH` (e.g. `DCIM/Camera/`) for [originalPath], or `null` when it
-     * isn't under primary shared storage (root-level files, or a secondary volume).
-     */
-    private fun relativePathFor(originalPath: String): String? {
-        val root = Environment.getExternalStorageDirectory().path
-        val parent = File(originalPath).parent ?: return null
-        if (!parent.startsWith(prefix = root)) return null
-        return parent.removePrefix(prefix = root).trim('/').takeIf {
-            it.isNotEmpty()
-        }?.let { "$it/" }
-    }
 
     override suspend fun deleteHiddenVideos(videos: List<Video>): Unit =
         vaultMutationMutex.withLock {
             val entities = entitiesFor(videos = videos)
             if (entities.isEmpty()) return@withLock
-            entities.forEach { File(it.vaultPath).delete() }
-            hiddenVideoDao.deleteByIds(entities.map { it.id })
+            val deletedIds = mutableListOf<Long>()
+            entities.forEach { entity ->
+                val deleted = withContext(context = Dispatchers.IO) {
+                    runCatching { File(entity.vaultPath).delete() }
+                        .onFailure {
+                            logCleanupFailure(
+                                operation = "delete file ${entity.vaultPath}",
+                                throwable = it,
+                            )
+                        }
+                        .getOrDefault(false)
+                }
+                if (deleted) {
+                    deletedIds += entity.id
+                } else {
+                    // Keep the record so the file stays visible and deletable in the vault.
+                }
+            }
+            hiddenVideoDao.deleteByIds(deletedIds)
+            // The files were indexed by MediaStore under their original names; rescan so the
+            // library reflects the removal immediately.
+            runCatching {
+                MediaScannerConnection.scanFile(
+                    context,
+                    entities.map { it.vaultPath }.toTypedArray(),
+                    null,
+                    null,
+                )
+            }
         }
 
     override suspend fun getHiddenVideoInfo(id: Long): MediaInfo? {
@@ -447,17 +200,27 @@ class LocalVaultRepository(
         ).also { mediaInfo?.release() }
     }
 
+    /**
+     * A hidden name in the same folder: dot-prefixed (skipped by MediaProvider and hidden in
+     * file managers) with no extension, so nothing recognizes it as a video anymore.
+     */
+    private fun createHiddenName(source: File): File = generateSequence {
+        File(source.parentFile, "." + UUID.randomUUID().toString().replace("-", "").take(16))
+    }
+        .first { !it.exists() }
+
     /** Looks up the vault entities backing the given [videos] by their row id. */
     private suspend fun entitiesFor(videos: List<Video>): List<HiddenVideoEntity> {
         val ids = videos.map { it.id }.toSet()
         return hiddenVideoDao.getAll().first().filter { it.id in ids }
     }
 
-    private fun fileProviderUri(file: File): Uri = FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        file,
-    )
+    private fun logCleanupFailure(operation: String, throwable: Throwable) {
+        Logger.logError(
+            tag = TAG,
+            message = "Failed to $operation: ${throwable.stackTraceToString()}",
+        )
+    }
 
     private fun HiddenVideoEntity.toVideo(): Video {
         val uriString = fileProviderUri(file = File(vaultPath)).toString()
@@ -478,11 +241,13 @@ class LocalVaultRepository(
         )
     }
 
+    private fun fileProviderUri(file: File): Uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file,
+    )
+
     companion object {
         private const val TAG = "LocalVaultRepository"
-        private const val VAULT_DIR_NAME = ".MyPlayerEnc"
-
-        /** Fallback folder for videos whose original location MediaStore won't accept. */
-        private val DEFAULT_RESTORE_DIR = Environment.DIRECTORY_MOVIES + "/"
     }
 }

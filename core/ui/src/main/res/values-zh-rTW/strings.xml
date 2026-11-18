@@ -308,9 +308,6 @@
     <string name="hide_video_info">您隱藏的影片將會移至保險箱加密，並從媒體庫中移除。</string>
     <string name="hiding_videos_in_progress">正在隱藏…</string>
     <string name="unhiding_videos_in_progress">正在取消隱藏…</string>
-    <plurals name="videos_relocated_to_movies">
-        <item quantity="other">無法將 %1$d 部影片還原至起始資料夾 — 已移至 Movies/</item>
-    </plurals>
     <string name="hiding_videos">正在隱藏…</string>
     <string name="set_vault_pin">設定 PIN 碼</string>
     <string name="set_vault_pin_description">請輸入 4 位數字密碼以保護您的影片</string>

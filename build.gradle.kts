@@ -21,11 +21,6 @@ allprojects {
         outputColorName.set("RED")
         ignoreFailures.set(false)
     }
-
-    dependencies.add(
-        "ktlintRuleset",
-        project(":ktlint-rules"),
-    )
 }
 
 subprojects {

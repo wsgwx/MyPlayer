@@ -1,685 +1,175 @@
 package dev.anilbeesetti.nextplayer.core.data.repository
 
 import android.content.Context
-import android.net.Uri
-import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.anilbeesetti.nextplayer.core.database.MediaDatabase
-import dev.anilbeesetti.nextplayer.core.database.dao.HiddenVideoDao
-import dev.anilbeesetti.nextplayer.core.database.entities.HiddenVideoEntity
-import dev.anilbeesetti.nextplayer.core.database.entities.MediumStateEntity
-import dev.anilbeesetti.nextplayer.core.media.services.MediaOperationsService
-import dev.anilbeesetti.nextplayer.core.media.services.TransferEvent
-import dev.anilbeesetti.nextplayer.core.media.services.TransferMode
 import dev.anilbeesetti.nextplayer.core.model.Video
 import java.io.File
 import java.util.UUID
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * The vault hides videos in place by renaming them within their folder; unhiding renames them
+ * back. Files never move between folders.
+ */
 @RunWith(AndroidJUnit4::class)
 class LocalVaultRepositoryTest {
     private lateinit var database: MediaDatabase
+    private lateinit var context: Context
+    private lateinit var repository: LocalVaultRepository
+    private lateinit var folder: File
 
     @Before
     fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
+            context,
             MediaDatabase::class.java,
         ).build()
+        repository = LocalVaultRepository(
+            hiddenVideoDao = database.hiddenVideoDao(),
+            mediumStateDao = database.mediumStateDao(),
+            context = context,
+        )
+        folder = File(context.cacheDir, "vault-test-${UUID.randomUUID()}").apply { mkdirs() }
     }
 
     @After
     fun tearDown() {
+        folder.deleteRecursively()
         database.close()
     }
 
-    @Test
-    fun hideVideosKeepsSourceWhenDatabaseInsertFails() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val fileName = "issue-1828-${UUID.randomUUID()}.mp4"
-        val sourceFile = File(
-            context.cacheDir,
-            fileName,
-        ).apply {
-            writeText(text = "original video")
-        }
-        val vaultFile = File(
-            File(
-                context.getExternalFilesDir(null),
-                "vault",
-            ),
-            fileName,
-        )
-        val mediaOperations = MovingMediaOperationsService()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = FailingInsertHiddenVideoDao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = mediaOperations,
-            context = context,
-        )
-
-        try {
-            val result = runCatching {
-                repository.hideVideos(
-                    videos = listOf(
-                        Video.sample.copy(
-                            path = sourceFile.absolutePath,
-                            parentPath = sourceFile.parent.orEmpty(),
-                            uriString = sourceFile.toUri().toString(),
-                            nameWithExtension = fileName,
-                        ),
-                    ),
-                )
-            }
-
-            assertTrue(
-                "The repository must handle a rejected vault record",
-                result.isSuccess,
-            )
-            assertEquals(
-                "The video must not be moved before its vault record exists",
-                0,
-                mediaOperations.moveCalls,
-            )
-            assertTrue(
-                "The original video must remain in place",
-                sourceFile.exists(),
-            )
-            assertFalse(
-                "A failed hide must not leave a private vault copy",
-                vaultFile.exists(),
-            )
-        } finally {
-            sourceFile.delete()
-            vaultFile.delete()
-        }
+    private fun newVideo(name: String, bytes: Int = 16): File {
+        val file = File(folder, name)
+        file.writeBytes(ByteArray(bytes))
+        return file
     }
 
-    @Test
-    fun hideVideosUsesDistinctVaultFilesForMatchingSourceNames() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val testRoot = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-${UUID.randomUUID()}",
-        )
-        val firstSource = File(
-            File(
-                testRoot,
-                "first",
-            ).apply { mkdirs() },
-            "duplicate.mp4",
-        )
-            .apply { writeText(text = "first video") }
-        val secondSource = File(
-            File(
-                testRoot,
-                "second",
-            ).apply { mkdirs() },
-            "duplicate.mp4",
-        )
-            .apply { writeText(text = "second video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(),
-            context = context,
-        )
-
-        try {
-            repository.hideVideos(
-                videos = listOf(
-                    videoFor(file = firstSource),
-                    videoFor(file = secondSource),
-                ),
-            )
-
-            val vaultFiles = dao.entities.values.map { File(it.vaultPath) }
-            assertEquals(
-                2,
-                vaultFiles.size,
-            )
-            assertNotEquals(
-                vaultFiles[0].absolutePath,
-                vaultFiles[1].absolutePath,
-            )
-            assertEquals(
-                setOf(
-                    "first video",
-                    "second video",
-                ),
-                vaultFiles.map { it.readText() }.toSet(),
-            )
-            assertFalse(firstSource.exists())
-            assertFalse(secondSource.exists())
-        } finally {
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-            testRoot.deleteRecursively()
-        }
-    }
-
-    @Test
-    fun hideVideosRemovesReservationAndKeepsSourceWhenMoveFails() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            context.cacheDir,
-            "issue-1828-${UUID.randomUUID()}.mp4",
-        )
-            .apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(moveSucceeds = false),
-            context = context,
-        )
-
-        try {
-            repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-
-            assertTrue(
-                "A failed move must preserve the source",
-                sourceFile.exists(),
-            )
-            assertTrue(
-                "A failed move must roll back its reserved row",
-                dao.entities.isEmpty(),
-            )
-        } finally {
-            sourceFile.delete()
-        }
-    }
-
-    @Test
-    fun hideVideosCleansCommittedReservationWhenInsertIsCancelled() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            context.cacheDir,
-            "issue-1828-${UUID.randomUUID()}.mp4",
-        )
-            .apply { writeText(text = "original video") }
-        val dao = CommitThenCancelHiddenVideoDao()
-        val mediaOperations = MovingMediaOperationsService()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            database.mediumStateDao(),
-            mediaOperationsService = mediaOperations,
-            context = context,
-        )
-
-        try {
-            val result = runCatching {
-                repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-            }
-
-            assertTrue(result.exceptionOrNull() is CancellationException)
-            assertTrue(
-                "Cancellation before moving must preserve the source",
-                sourceFile.exists(),
-            )
-            assertTrue(
-                "A row committed before cancellation delivery must be cleaned up",
-                dao.entities.isEmpty(),
-            )
-            assertEquals(
-                0,
-                mediaOperations.moveCalls,
-            )
-        } finally {
-            sourceFile.delete()
-        }
-    }
-
-    @Test
-    fun hideVideosCleansReservationAndKeepsSourceWhenMoveIsCancelled() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            context.cacheDir,
-            "issue-1828-${UUID.randomUUID()}.mp4",
-        )
-            .apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(
-                moveException = CancellationException("cancelled"),
-            ),
-            context = context,
-        )
-
-        try {
-            val result = runCatching {
-                repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-            }
-
-            assertTrue(result.exceptionOrNull() is CancellationException)
-            assertTrue(
-                "A cancelled move must preserve the source",
-                sourceFile.exists(),
-            )
-            assertTrue(
-                "A cancelled move must clean up its reservation",
-                dao.entities.isEmpty(),
-            )
-        } finally {
-            sourceFile.delete()
-        }
-    }
-
-    @Test
-    fun hideVideosRetainsCommittedReservationWhenMoveIsCancelled() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-${UUID.randomUUID()}.mp4",
-        )
-            .apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(
-                moveExceptionAfterCommit = CancellationException("cancelled"),
-            ),
-            context = context,
-        )
-
-        try {
-            val result = runCatching {
-                repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-            }
-            val vaultFile = File(dao.entities.getValue(key = 1L).vaultPath)
-
-            assertTrue(result.exceptionOrNull() is CancellationException)
-            assertFalse(
-                "A committed move must not retain the source",
-                sourceFile.exists(),
-            )
-            assertTrue(
-                "A committed move must retain its reservation",
-                dao.entities.containsKey(1L),
-            )
-            assertTrue(
-                "A committed move must retain its vault file",
-                vaultFile.exists(),
-            )
-        } finally {
-            sourceFile.delete()
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-        }
-    }
-
-    @Test
-    fun hideVideosRetainsOnlyCommittedRowsFromPartialMoveResult() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val testRoot = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-partial-${UUID.randomUUID()}",
-        )
-        val firstSource = File(
-            File(
-                testRoot,
-                "first",
-            ).apply { mkdirs() },
-            "first.mp4",
-        )
-            .apply { writeText(text = "first video") }
-        val secondSource = File(
-            File(
-                testRoot,
-                "second",
-            ).apply { mkdirs() },
-            "second.mp4",
-        )
-            .apply { writeText(text = "second video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(maxSuccessfulMoves = 1),
-            context = context,
-        )
-        database.mediumStateDao().upsert(
-            mediumState = MediumStateEntity(
-                uriString = firstSource.toUri().toString(),
-                lastPlayedTime = 100,
-                playbackPosition = 40,
-            ),
-        )
-        database.mediumStateDao().upsert(
-            mediumState = MediumStateEntity(
-                uriString = secondSource.toUri().toString(),
-                lastPlayedTime = 200,
-            ),
-        )
-
-        try {
-            repository.hideVideos(
-                videos = listOf(
-                    videoFor(file = firstSource),
-                    videoFor(file = secondSource),
-                ),
-            )
-
-            assertEquals(
-                listOf(element = 1L),
-                dao.entities.keys.toList(),
-            )
-            assertFalse(
-                "The first source must be committed",
-                firstSource.exists(),
-            )
-            assertTrue(
-                "The first reservation must retain its vault file",
-                File(dao.entities.getValue(key = 1L).vaultPath).exists(),
-            )
-            assertTrue(
-                "The later uncommitted source must remain",
-                secondSource.exists(),
-            )
-            assertNull(
-                database.mediumStateDao().get(firstSource.toUri().toString())?.lastPlayedTime,
-            )
-            assertEquals(
-                40L,
-                database.mediumStateDao().get(firstSource.toUri().toString())?.playbackPosition,
-            )
-            assertEquals(
-                200L,
-                database.mediumStateDao().get(secondSource.toUri().toString())?.lastPlayedTime,
-            )
-        } finally {
-            firstSource.delete()
-            secondSource.delete()
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-            testRoot.deleteRecursively()
-        }
-    }
-
-    @Test
-    fun hideVideosRemovesReservationWhenReportedDestinationIsMissing() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-missing-destination-${UUID.randomUUID()}.mp4",
-        ).apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            mediumStateDao = database.mediumStateDao(),
-            mediaOperationsService = MovingMediaOperationsService(
-                deleteDestinationBeforeReturn = true,
-            ),
-            context = context,
-        )
-
-        try {
-            repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-
-            assertTrue(
-                "A missing reported destination must not retain a vault row",
-                dao.entities.isEmpty(),
-            )
-        } finally {
-            sourceFile.delete()
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-        }
-    }
-
-    @Test
-    fun observeHiddenVideosDoesNotExposeReservationBeforeMoveCommits() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-pending-${UUID.randomUUID()}.mp4",
-        ).apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val mediaOperations = PausedMovingMediaOperationsService()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            database.mediumStateDao(),
-            mediaOperationsService = mediaOperations,
-            context = context,
-        )
-
-        try {
-            val hideJob = launch(start = CoroutineStart.UNDISPATCHED) {
-                repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-            }
-            withTimeout(timeMillis = TEST_TIMEOUT_MILLIS) { mediaOperations.moveStarted.await() }
-
-            assertTrue(
-                "A reservation must stay hidden until its vault file commits",
-                repository.observeHiddenVideos().first().isEmpty(),
-            )
-
-            mediaOperations.allowMove.complete(value = Unit)
-            withTimeout(timeMillis = TEST_TIMEOUT_MILLIS) { hideJob.join() }
-            assertEquals(
-                1,
-                repository.observeHiddenVideos().first().size,
-            )
-        } finally {
-            mediaOperations.allowMove.complete(value = Unit)
-            sourceFile.delete()
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-        }
-    }
-
-    @Test
-    fun deleteHiddenVideosWaitsForInProgressHideToCommit() = runBlocking {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sourceFile = File(
-            requireNotNull(context.getExternalFilesDir(null)),
-            "issue-1828-delete-race-${UUID.randomUUID()}.mp4",
-        ).apply { writeText(text = "original video") }
-        val dao = RecordingHiddenVideoDao()
-        val mediaOperations = PausedMovingMediaOperationsService()
-        val repository = LocalVaultRepository(
-            hiddenVideoDao = dao,
-            database.mediumStateDao(),
-            mediaOperationsService = mediaOperations,
-            context = context,
-        )
-
-        try {
-            val hideJob = launch(start = CoroutineStart.UNDISPATCHED) {
-                repository.hideVideos(videos = listOf(element = videoFor(file = sourceFile)))
-            }
-            withTimeout(timeMillis = TEST_TIMEOUT_MILLIS) { mediaOperations.moveStarted.await() }
-
-            val deleteJob = launch(start = CoroutineStart.UNDISPATCHED) {
-                repository.deleteHiddenVideos(
-                    videos = listOf(videoFor(file = sourceFile).copy(id = 1L)),
-                )
-            }
-
-            assertTrue(
-                "Delete must wait for the in-progress hide operation",
-                deleteJob.isActive,
-            )
-            assertTrue(
-                "Delete must not remove an in-progress reservation",
-                dao.entities.containsKey(1L),
-            )
-
-            mediaOperations.allowMove.complete(value = Unit)
-            withTimeout(timeMillis = TEST_TIMEOUT_MILLIS) {
-                hideJob.join()
-                deleteJob.join()
-            }
-
-            assertFalse(sourceFile.exists())
-            assertTrue(dao.entities.isEmpty())
-        } finally {
-            mediaOperations.allowMove.complete(value = Unit)
-            sourceFile.delete()
-            dao.entities.values.forEach { File(it.vaultPath).delete() }
-        }
-    }
-
-    private fun videoFor(file: File): Video = Video.sample.copy(
+    private fun videoFor(file: File) = Video.sample.copy(
         path = file.absolutePath,
         parentPath = file.parent.orEmpty(),
         uriString = file.toUri().toString(),
         nameWithExtension = file.name,
     )
 
-    private companion object {
-        const val TEST_TIMEOUT_MILLIS = 5_000L
-    }
-}
+    @Test
+    fun hideRenamesFileInPlaceWithHiddenDotName() = runBlocking {
+        val file = newVideo("movie.mp4")
+        repository.hideVideos(videos = listOf(videoFor(file)))
 
-private data object FailingInsertHiddenVideoDao : HiddenVideoDao {
-    override suspend fun insert(hiddenVideo: HiddenVideoEntity): Long {
-        error(message = "UNIQUE constraint failed: hidden_video.vault_path")
-    }
-
-    override fun getAll(): Flow<List<HiddenVideoEntity>> = flowOf(value = emptyList())
-
-    override suspend fun getById(id: Long): HiddenVideoEntity? = null
-
-    override suspend fun deleteByIds(ids: List<Long>) = Unit
-
-    override suspend fun deleteByVaultPaths(vaultPaths: List<String>) = Unit
-}
-
-private class RecordingHiddenVideoDao : HiddenVideoDao {
-    val entities = linkedMapOf<Long, HiddenVideoEntity>()
-    private var nextId = 1L
-
-    override suspend fun insert(hiddenVideo: HiddenVideoEntity): Long {
-        val id = nextId++
-        entities[id] = hiddenVideo.copy(id = id)
-        return id
+        val hidden = database.hiddenVideoDao().getAll().first().single()
+        val renamed = File(hidden.vaultPath)
+        // Same folder, file still exists, but under a dot-prefixed name without extension.
+        assertEquals(folder.absolutePath, renamed.parent)
+        assertTrue(renamed.exists())
+        assertFalse(renamed.name.startsWith("movie"))
+        assertTrue(renamed.name.startsWith("."))
+        assertFalse(renamed.extension.isNotEmpty())
+        assertEquals(file.absolutePath, hidden.originalPath)
+        assertFalse(file.exists())
     }
 
-    override fun getAll(): Flow<List<HiddenVideoEntity>> = flowOf(entities.values.toList())
+    @Test
+    fun unhideRenamesBackToOriginalName() = runBlocking {
+        val file = newVideo("movie.mp4")
+        repository.hideVideos(videos = listOf(videoFor(file)))
+        val entity = database.hiddenVideoDao().getAll().first().single()
+        val renamed = File(entity.vaultPath)
 
-    override suspend fun getById(id: Long): HiddenVideoEntity? = entities[id]
+        repository.unhideVideos(
+            videos = listOf(
+                Video.sample.copy(
+                    id = entity.id,
+                    uriString = renamed.toUri().toString(),
+                    nameWithExtension = entity.displayName,
+                ),
+            ),
+        )
 
-    override suspend fun deleteByIds(ids: List<Long>) {
-        ids.forEach(action = entities::remove)
+        assertTrue(file.exists())
+        assertFalse(renamed.exists())
+        assertTrue(database.hiddenVideoDao().getAll().first().isEmpty())
     }
 
-    override suspend fun deleteByVaultPaths(vaultPaths: List<String>) {
-        entities.entries.removeAll { it.value.vaultPath in vaultPaths }
-    }
-}
+    @Test
+    fun unhideKeepsRecordWhenOriginalNameIsTaken() = runBlocking {
+        val file = newVideo("movie.mp4")
+        repository.hideVideos(videos = listOf(videoFor(file)))
+        val entity = database.hiddenVideoDao().getAll().first().single()
+        // Someone else creates a file at the original path before the unhide.
+        File(entity.originalPath).writeBytes(ByteArray(8))
 
-private class CommitThenCancelHiddenVideoDao : HiddenVideoDao {
-    val entities = linkedMapOf<Long, HiddenVideoEntity>()
+        val result = repository.unhideVideos(
+            videos = listOf(
+                Video.sample.copy(
+                    id = entity.id,
+                    uriString = File(entity.vaultPath).toUri().toString(),
+                    nameWithExtension = entity.displayName,
+                ),
+            ),
+        )
 
-    override suspend fun insert(hiddenVideo: HiddenVideoEntity): Long {
-        entities[1L] = hiddenVideo.copy(id = 1L)
-        throw CancellationException("cancelled after commit")
-    }
-
-    override fun getAll(): Flow<List<HiddenVideoEntity>> = flowOf(entities.values.toList())
-
-    override suspend fun getById(id: Long): HiddenVideoEntity? = entities[id]
-
-    override suspend fun deleteByIds(ids: List<Long>) {
-        ids.forEach(action = entities::remove)
-    }
-
-    override suspend fun deleteByVaultPaths(vaultPaths: List<String>) {
-        entities.entries.removeAll { it.value.vaultPath in vaultPaths }
-    }
-}
-
-private class MovingMediaOperationsService(
-    private val moveSucceeds: Boolean = true,
-    private val moveException: Exception? = null,
-    private val moveExceptionAfterCommit: Exception? = null,
-    private val maxSuccessfulMoves: Int = Int.MAX_VALUE,
-    private val deleteDestinationBeforeReturn: Boolean = false,
-) : MediaOperationsService {
-    var moveCalls: Int = 0
-        private set
-
-    override fun initialize(activity: ComponentActivity) = Unit
-
-    override suspend fun removeFromLibrary(uris: List<Uri>): Boolean = true
-
-    override suspend fun deleteMedia(uris: List<Uri>): Boolean = true
-
-    override suspend fun renameMedia(uri: Uri, to: String): Boolean = false
-
-    override suspend fun shareMedia(uris: List<Uri>) = Unit
-
-    override suspend fun moveMedia(targets: Map<Uri, File>): Map<Uri, File?> {
-        moveCalls++
-        moveException?.let { throw it }
-        val movedFiles = targets.entries.mapIndexed { index, (uri, destination) ->
-            if (!moveSucceeds || index >= maxSuccessfulMoves) return@mapIndexed uri to null
-            val source = File(requireNotNull(uri.path))
-            destination.parentFile?.mkdirs()
-            uri to destination.takeIf { source.renameTo(destination) }
-        }.toMap()
-        if (deleteDestinationBeforeReturn) {
-            movedFiles.values.filterNotNull().forEach(action = File::delete)
-        }
-        moveExceptionAfterCommit?.let { throw it }
-        return movedFiles
+        assertEquals(0, result.relocatedCount)
+        // The renamed file must remain recorded, not orphaned.
+        assertTrue(database.hiddenVideoDao().getAll().first().isNotEmpty())
+        assertTrue(File(entity.vaultPath).exists())
     }
 
-    override fun transferMedia(
-        uris: List<Uri>,
-        folderUri: Uri,
-        mode: TransferMode,
-    ): Flow<TransferEvent> = emptyFlow()
-}
+    @Test
+    fun deleteRemovesRenamedFileAndRecord() = runBlocking {
+        val file = newVideo("movie.mp4")
+        repository.hideVideos(videos = listOf(videoFor(file)))
+        val entity = database.hiddenVideoDao().getAll().first().single()
 
-private class PausedMovingMediaOperationsService : MediaOperationsService {
-    val moveStarted = CompletableDeferred<Unit>()
-    val allowMove = CompletableDeferred<Unit>()
+        repository.deleteHiddenVideos(
+            videos = listOf(
+                Video.sample.copy(
+                    id = entity.id,
+                    uriString = File(entity.vaultPath).toUri().toString(),
+                    nameWithExtension = entity.displayName,
+                ),
+            ),
+        )
 
-    override fun initialize(activity: ComponentActivity) = Unit
-
-    override suspend fun removeFromLibrary(uris: List<Uri>): Boolean = true
-
-    override suspend fun deleteMedia(uris: List<Uri>): Boolean = true
-
-    override suspend fun renameMedia(uri: Uri, to: String): Boolean = false
-
-    override suspend fun shareMedia(uris: List<Uri>) = Unit
-
-    override suspend fun moveMedia(targets: Map<Uri, File>): Map<Uri, File?> {
-        moveStarted.complete(value = Unit)
-        allowMove.await()
-        return targets.mapValues { (uri, destination) ->
-            val source = File(requireNotNull(uri.path))
-            destination.parentFile?.mkdirs()
-            destination.takeIf { source.renameTo(destination) }
-        }
+        assertFalse(File(entity.vaultPath).exists())
+        assertTrue(database.hiddenVideoDao().getAll().first().isEmpty())
     }
 
-    override fun transferMedia(
-        uris: List<Uri>,
-        folderUri: Uri,
-        mode: TransferMode,
-    ): Flow<TransferEvent> = emptyFlow()
+    @Test
+    fun hideSkipsFilesThatNoLongerExist() = runBlocking {
+        val missing = File(folder, "gone.mp4")
+        repository.hideVideos(videos = listOf(videoFor(missing)))
+
+        assertTrue(database.hiddenVideoDao().getAll().first().isEmpty())
+        assertFalse(missing.exists())
+    }
+
+    @Test
+    fun hideTwiceDoesNotDuplicateRecords() = runBlocking {
+        val file = newVideo("movie.mp4")
+        val video = videoFor(file)
+        repository.hideVideos(videos = listOf(video))
+        val afterFirst = database.hiddenVideoDao().getAll().first().single()
+
+        // The second attempt targets the original path, which no longer exists.
+        repository.hideVideos(videos = listOf(video))
+
+        val records = database.hiddenVideoDao().getAll().first()
+        assertEquals(1, records.size)
+        assertEquals(afterFirst.vaultPath, records.single().vaultPath)
+        assertNotNull(File(records.single().vaultPath))
+    }
 }

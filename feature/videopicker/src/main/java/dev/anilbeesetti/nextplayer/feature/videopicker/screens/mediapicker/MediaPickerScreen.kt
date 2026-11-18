@@ -614,13 +614,6 @@ internal fun MediaPickerScreenContent(
             )
         }
 
-        state.mediaInfo?.let { mediaInfo ->
-            MediaInfoDialog(
-                mediaInfo = mediaInfo,
-                onDismiss = { onAction(MediaPickerAction.DismissMediaInfo) },
-            )
-        }
-
         if (state.showAllFilesAccessDialog) {
             AlertDialog(
                 onDismissRequest = { onAction(MediaPickerAction.DismissAllFilesAccessDialog) },
@@ -640,6 +633,13 @@ internal fun MediaPickerScreenContent(
                         Text(text = stringResource(id = android.R.string.cancel))
                     }
                 },
+            )
+        }
+
+        state.mediaInfo?.let { mediaInfo ->
+            MediaInfoDialog(
+                mediaInfo = mediaInfo,
+                onDismiss = { onAction(MediaPickerAction.DismissMediaInfo) },
             )
         }
 
